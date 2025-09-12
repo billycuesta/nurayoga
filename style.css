@@ -1,0 +1,57 @@
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #F5F1E9; /* Tono crema de fondo */
+    color: #333;
+}
+.font-brand {
+    font-family: 'Playfair Display', serif;
+}
+.bg-brand {
+     background-color: #C0A164; /* Tono ocre */
+}
+.text-brand {
+    color: #C0A164;
+}
+.border-brand {
+    border-color: #C0A164;
+}
+.btn-brand {
+    background-color: #C0A164;
+    color: white;
+    transition: background-color 0.3s;
+}
+.btn-brand:hover {
+    background-color: #a98c53;
+}
+.btn-secondary {
+    background-color: #f0f0f0;
+    color: #555;
+    transition: background-color 0.3s;
+}
+.btn-secondary:hover {
+    background-color: #e0e0e0;
+}
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+.class-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.class-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #F5F1E9;
+}
+::-webkit-scrollbar-thumb {
+    background: #C0A164;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #a98c53;
+}
