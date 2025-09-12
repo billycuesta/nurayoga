@@ -4,35 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- PWA Meta Tags -->
     <title>Nura Yoga Admin</title>
     <meta name="theme-color" content="#C0A164"/>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Nura Admin">
 
-    <!-- Manifest and Icons -->
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
 
-    <!-- Styles and Scripts -->
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
     
-    <script src="app.js" defer></script>
+    <!-- Scripts en orden de dependencias -->
+    <script src="js/utils.js" defer></script>
+    <script src="js/database.js" defer></script>
+    <script src="js/ui.js" defer></script>
+    <script src="js/models/Student.js" defer></script>
+    <script src="js/models/Class.js" defer></script>
+    <script src="js/models/Teacher.js" defer></script>
+    <script src="js/app.js" defer></script>
+
+
 </head>
 <body class="antialiased">
 
     <div id="app" class="min-h-screen flex flex-col">
 
-        <!-- Header -->
         <header class="bg-brand shadow-md">
             <div class="container mx-auto px-4 py-4 flex justify-between items-center">
                 <div class="flex items-center space-x-3">
-                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-8 h-8 text-white" viewBox="0 0 16 16"><path d="M1.4 1.7c.217.289.65.84 1.725 1.274 1.093.44 2.885.774 5.834.528 2.02-.168 3.431.51 4.326 1.556C14.161 6.082 14.5 7.41 14.5 8.5q0 .344-.027.734C13.387 8.252 11.877 7.76 10.39 7.5c-2.016-.288-4.188-.445-5.59-2.045-.142-.162-.402-.102-.379.112.108.985 1.104 1.82 1.844 2.308 2.37 1.566 5.772-.118 7.6 3.071.505.8 1.374 2.7 1.75 4.292.07.298-.066.611-.354.715a.7.7 0 0 1-.161.042 1 1 0 0 1-1.08-.794c-.13-.97-.396-1.913-.868-2.77C12.173 13.386 10.565 14 8 14c-1.854 0-3.32-.544-4.45-1.435-1.124-.887-1.889-2.095-2.39-3.383-1-2.562-1-5.536-.65-7.28L.73.806z"/></svg>
                     <h1 class="text-2xl font-bold text-white tracking-wider">nura yoga <span class="font-light">admin</span></h1>
                 </div>
                 <nav class="flex space-x-4">
@@ -42,12 +47,10 @@
             </div>
         </header>
 
-        <!-- Main Content -->
         <main class="flex-grow container mx-auto p-4 md:p-8">
 
-            <!-- Vista Horario -->
             <div id="view-horario">
-                <div class="flex justify-between items-center mb-6">
+                 <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
                     <h2 class="text-3xl font-bold text-gray-700">Horario de Clases</h2>
                     <div class="flex items-center space-x-4">
                         <button id="prev-week" class="p-2 rounded-full hover:bg-gray-200 transition-colors">
@@ -58,22 +61,34 @@
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </button>
                     </div>
+                    <div class="flex items-center space-x-2">
+                         <button id="open-one-off-class-modal-btn" class="btn-secondary font-bold py-2 px-4 rounded-lg shadow-sm">
+                            + Añadir Clase Puntual
+                        </button>
+                        <button id="open-template-modal-btn" class="btn-brand font-bold py-2 px-4 rounded-lg shadow-sm">
+                            Gestionar Clases Fijas
+                        </button>
+                    </div>
                 </div>
 
                 <div id="calendar-grid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-                    <!-- Las columnas y clases se generarán aquí con JavaScript -->
-                </div>
+                    </div>
             </div>
 
-            <!-- Vista Alumnos -->
             <div id="view-alumnos" class="hidden">
-                <div class="flex justify-between items-center mb-6">
+                <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
                     <h2 class="text-3xl font-bold text-gray-700">Gestión de Alumnos</h2>
-                     <button id="open-new-student-modal" class="btn-brand font-bold py-2 px-4 rounded-lg shadow-sm">
-                        + Nuevo Alumno
-                    </button>
+                    <div class="flex items-center space-x-2">
+                        <input type="file" id="student-csv-import-input" accept=".csv" class="hidden">
+                        <button id="import-students-btn" class="btn-secondary font-bold py-2 px-4 rounded-lg shadow-sm">
+                            Importar Alumnos (CSV)
+                        </button>
+                        <button id="open-new-student-modal" class="btn-brand font-bold py-2 px-4 rounded-lg shadow-sm">
+                            + Nuevo Alumno
+                        </button>
+                    </div>
                 </div>
-                <div class="bg-white p-6 rounded-lg shadow-md">
+                <div id="students-table-container" class="bg-white p-6 rounded-lg shadow-md">
                      <div class="mb-4">
                         <input type="text" id="student-search-input" placeholder="Buscar por nombre o email..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand">
                     </div>
@@ -88,16 +103,21 @@
                                 </tr>
                             </thead>
                             <tbody id="students-table-body">
-                                <!-- Filas de alumnos se generarán aquí -->
-                            </tbody>
+                                </tbody>
                         </table>
                     </div>
+                </div>
+                <div class="mt-8 bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">Mantenimiento</h3>
+                    <p class="text-gray-600 mb-4">Ideal para final de curso. Esto borrará TODAS las inscripciones de los alumnos a las clases (tanto fijas como puntuales), pero no borrará a los alumnos ni la plantilla de clases fijas.</p>
+                    <button id="clear-all-inscriptions-btn" class="btn-danger font-bold py-2 px-4 rounded-lg shadow-sm">
+                        Limpiar Todas las Inscripciones
+                    </button>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Modal para gestionar una clase -->
     <div id="class-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
             <div class="p-6 border-b">
@@ -105,6 +125,7 @@
                     <div>
                         <h3 id="modal-class-name" class="text-2xl font-bold text-gray-800"></h3>
                         <p id="modal-class-time" class="text-gray-500"></p>
+                        <p id="modal-class-teacher" class="font-semibold mt-1"></p>
                     </div>
                     <button id="close-class-modal" class="p-2 -mt-2 -mr-2 text-gray-400 hover:text-gray-700">&times;</button>
                 </div>
@@ -113,43 +134,122 @@
             <div class="p-6 flex-grow overflow-y-auto">
                 <h4 class="font-semibold mb-4 text-gray-700">Asistentes</h4>
                 <div id="attendees-list" class="space-y-3 mb-6">
-                    <!-- Lista de asistentes se generará aquí -->
-                </div>
+                    </div>
                 <div id="add-attendee-section">
                      <h4 class="font-semibold mb-2 text-gray-700">Añadir Alumno</h4>
                      <div class="flex space-x-2">
-                        <select id="add-student-select" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand">
-                           <!-- Opciones de alumnos se generarán aquí -->
-                        </select>
+                        <select id="add-student-select" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"></select>
                         <button id="add-student-to-class-btn" class="btn-brand font-bold py-2 px-4 rounded-lg">Añadir</button>
                      </div>
                 </div>
             </div>
-            <div class="p-4 bg-gray-50 rounded-b-lg flex justify-end">
+            <div id="class-modal-footer" class="p-4 bg-gray-50 rounded-b-lg flex justify-between items-center">
+                 <div id="class-actions-container">
+                     </div>
                  <button id="close-class-modal-btn" class="btn-secondary font-bold py-2 px-4 rounded-lg">Cerrar</button>
             </div>
         </div>
     </div>
     
-    <!-- Modal para nuevo alumno -->
-    <div id="new-student-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
+    <div id="schedule-template-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col">
+            <div class="p-6 border-b flex justify-between items-center">
+                 <h3 class="text-2xl font-bold text-gray-800">Plantilla de Clases Fijas</h3>
+                 <button id="close-template-modal" class="p-2 text-gray-400 hover:text-gray-700">&times;</button>
+            </div>
+            <div class="flex-grow p-6 overflow-y-auto space-y-8">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 id="template-form-title" class="font-semibold text-lg mb-4 text-gray-700">Añadir Nueva Clase Fija</h4>
+                    <form id="template-class-form" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                        <input type="hidden" id="template-class-id">
+                        <div>
+                            <label for="template-day" class="block text-sm font-medium text-gray-600">Día</label>
+                            <select id="template-day" name="template-day" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand">
+                                <option value="1">Lunes</option><option value="2">Martes</option><option value="3">Miércoles</option><option value="4">Jueves</option><option value="5">Viernes</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="template-time" class="block text-sm font-medium text-gray-600">Hora</label>
+                            <input type="time" id="template-time" name="template-time" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand">
+                        </div>
+                        <div>
+                            <label for="template-name" class="block text-sm font-medium text-gray-600">Nombre Clase</label>
+                            <input type="text" id="template-name" name="template-name" required placeholder="Ej. Vinyasa Flow" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand">
+                        </div>
+                        <div>
+                            <label for="template-teacher-select" class="block text-sm font-medium text-gray-600">Profesor/a</label>
+                            <select id="template-teacher-select" name="template-teacher-select" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand"></select>
+                        </div>
+                        <div class="flex space-x-2">
+                             <div>
+                                <label for="template-capacity" class="block text-sm font-medium text-gray-600">Plazas</label>
+                                <input type="number" id="template-capacity" name="template-capacity" required value="10" min="1" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand">
+                            </div>
+                            <button type="submit" id="save-template-class-btn" class="btn-brand h-10 mt-auto font-bold px-4 rounded-lg self-end">Añadir</button>
+                        </div>
+                    </form>
+                </div>
+                <div id="template-display" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6"></div>
+            </div>
+             <div class="p-4 bg-gray-50 rounded-b-lg flex justify-end">
+                 <button id="close-template-modal-btn" class="btn-secondary font-bold py-2 px-4 rounded-lg">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="one-off-class-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-md">
              <div class="p-6 border-b flex justify-between items-center">
-                 <h3 class="text-2xl font-bold text-gray-800">Nuevo Alumno</h3>
+                 <h3 id="one-off-modal-title" class="text-2xl font-bold text-gray-800">Nueva Clase Puntual</h3>
+                 <button id="close-one-off-class-modal" class="p-2 text-gray-400 hover:text-gray-700">&times;</button>
+            </div>
+            <form id="one-off-class-form" class="p-6 space-y-4">
+                 <input type="hidden" id="one-off-class-id">
+                 <div>
+                    <label for="one-off-date" class="block text-sm font-medium text-gray-700">Fecha</label>
+                    <input type="date" id="one-off-date" name="one-off-date" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand focus:border-brand">
+                </div>
+                 <div>
+                    <label for="one-off-time" class="block text-sm font-medium text-gray-700">Hora</label>
+                    <input type="time" id="one-off-time" name="one-off-time" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand focus:border-brand">
+                </div>
+                <div>
+                    <label for="one-off-name" class="block text-sm font-medium text-gray-700">Nombre de la Clase</label>
+                    <input type="text" id="one-off-name" name="one-off-name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand focus:border-brand">
+                </div>
+                 <div>
+                    <label for="one-off-teacher-select" class="block text-sm font-medium text-gray-700">Profesor/a</label>
+                    <select id="one-off-teacher-select" name="one-off-teacher-select" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand"></select>
+                </div>
+                 <div>
+                    <label for="one-off-capacity" class="block text-sm font-medium text-gray-700">Plazas</label>
+                    <input type="number" id="one-off-capacity" name="one-off-capacity" value="10" min="1" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand focus:border-brand">
+                </div>
+                 <div class="pt-4 flex justify-end space-x-3">
+                     <button type="button" id="cancel-one-off-class" class="btn-secondary font-bold py-2 px-4 rounded-lg">Cancelar</button>
+                     <button type="submit" id="save-one-off-class-btn" class="btn-brand font-bold py-2 px-4 rounded-lg">Guardar Clase</button>
+                 </div>
+            </form>
+        </div>
+    </div>
+        <div id="new-student-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-md">
+             <div class="p-6 border-b flex justify-between items-center">
+                 <h3 class="text-2xl font-bold text-gray-800">Nuevo Alumno/a</h3>
                  <button id="close-new-student-modal" class="p-2 text-gray-400 hover:text-gray-700">&times;</button>
             </div>
             <form id="new-student-form" class="p-6 space-y-4">
-                <div>
+                 <div>
                     <label for="new-student-name" class="block text-sm font-medium text-gray-700">Nombre Completo</label>
-                    <input type="text" id="new-student-name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand focus:border-brand">
+                    <input type="text" id="new-student-name" name="new-student-name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand">
                 </div>
                  <div>
                     <label for="new-student-email" class="block text-sm font-medium text-gray-700">Email</label>
-                    <input type="email" id="new-student-email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand focus:border-brand">
+                    <input type="email" id="new-student-email" name="new-student-email" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand">
                 </div>
-                 <div>
-                    <label for="new-student-phone" class="block text-sm font-medium text-gray-700">Teléfono (Opcional)</label>
-                    <input type="tel" id="new-student-phone" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand focus:border-brand">
+                <div>
+                    <label for="new-student-phone" class="block text-sm font-medium text-gray-700">Teléfono</label>
+                    <input type="tel" id="new-student-phone" name="new-student-phone" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand">
                 </div>
                  <div class="pt-4 flex justify-end space-x-3">
                      <button type="button" id="cancel-new-student" class="btn-secondary font-bold py-2 px-4 rounded-lg">Cancelar</button>
@@ -158,6 +258,6 @@
             </form>
         </div>
     </div>
-
-</body>
+    
+    </body>
 </html>

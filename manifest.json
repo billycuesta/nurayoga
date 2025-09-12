@@ -1,21 +1,22 @@
 {
-    "name": "Nura Yoga Admin",
-    "short_name": "Nura Admin",
-    "start_url": "index.html",
-    "display": "standalone",
-    "background_color": "#F5F1E9",
-    "theme_color": "#C0A164",
-    "description": "App de gestión para Nura Yoga.",
-    "icons": [
-        {
-            "src": "icons/icon-192x192.png",
-            "sizes": "192x192",
-            "type": "image/png"
-        },
-        {
-            "src": "icons/icon-512x512.png",
-            "sizes": "512x512",
-            "type": "image/png"
-        }
-    ]
+  "name": "Nura Yoga Admin",
+  "short_name": "Nura Admin",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#F5F1E9",
+  "theme_color": "#C0A164",
+  "description": "Aplicación de gestión de horarios y alumnos para Nura Yoga.",
+  "icons": [
+    {
+      "src": "icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
+

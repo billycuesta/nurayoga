@@ -31,8 +31,17 @@ body {
 .btn-secondary:hover {
     background-color: #e0e0e0;
 }
+.btn-danger {
+    background-color: #ef4444;
+    color: white;
+    transition: background-color 0.3s;
+}
+.btn-danger:hover {
+    background-color: #dc2626;
+}
 .modal-backdrop {
     background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
 }
 .class-card {
     transition: transform 0.2s, box-shadow 0.2s;
@@ -44,6 +53,7 @@ body {
 /* Scrollbar styling */
 ::-webkit-scrollbar {
     width: 8px;
+    height: 8px;
 }
 ::-webkit-scrollbar-track {
     background: #F5F1E9;
@@ -55,3 +65,4 @@ body {
 ::-webkit-scrollbar-thumb:hover {
     background: #a98c53;
 }
+
