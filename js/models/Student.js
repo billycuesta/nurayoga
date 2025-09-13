@@ -5,8 +5,8 @@ class Student {
         this.name = data.name || '';
         this.email = data.email || '';
         this.phone = data.phone || '';
-        this.createdAt = data.createdAt || new Date().toISOString();
-        this.updatedAt = data.updatedAt || new Date().toISOString();
+        this.fechaAlta = data.fechaAlta ? new Date(data.fechaAlta) : new Date();
+        this.fechaBaja = data.fechaBaja ? new Date(data.fechaBaja) : null;
     }
 
     // Validaciones
@@ -196,6 +196,21 @@ class Student {
             createdAt: this.createdAt,
             updatedAt: this.updatedAt
         };
+    }
+        toDBFormat() {
+        const data = {
+            name: this.name.trim(),
+            email: this.email.trim(),
+            phone: this.phone.trim(),
+            fechaAlta: this.fechaAlta.toISOString(),
+            fechaBaja: this.fechaBaja ? this.fechaBaja.toISOString() : null
+        };
+        
+        if (this.id) {
+            data.id = this.id;
+        }
+        
+        return data;
     }
 }
 

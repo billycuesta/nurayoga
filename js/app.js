@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Configurar componentes UI
             setupUIComponents();
+            setupEditStudentModal();
             setupEventListeners();
             setupFormValidators();
             populateTimeSelects();
@@ -419,8 +420,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+
     async function renderStudentsTable(filter = '') {
-        // Usar el tbody existente en lugar de crear una tabla nueva
         const tbody = document.getElementById('students-table-body');
         tbody.innerHTML = '';
         
@@ -428,22 +429,35 @@ document.addEventListener('DOMContentLoaded', async () => {
         const filteredStudents = filter ? SearchUtils.filterStudents(students, filter) : students;
         
         if (filteredStudents.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-500">No se encontraron alumnos.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center p-8 text-gray-500">No se encontraron alumnos.</td></tr>';
             return;
         }
 
         filteredStudents.forEach(student => {
             const row = DOMUtils.createElement('tr', 'border-b hover:bg-gray-50');
+            
+            // --- LÍNEAS CORREGIDAS ---
+            const fechaAltaFormatted = student.fechaAlta ? new Date(student.fechaAlta).toLocaleDateString('es-ES') : '-';
+            const estado = student.fechaBaja 
+                ? `<span class="text-red-500 font-semibold">De baja (${new Date(student.fechaBaja).toLocaleDateString('es-ES')})</span>` 
+                : '<span class="text-green-600 font-semibold">Activo</span>';
+            // --- FIN DE LA CORRECCIÓN ---
+
             row.innerHTML = `
                 <td class="p-4">${student.name}</td>
                 <td class="p-4">${student.email || '-'}</td>
                 <td class="p-4">${student.phone || '-'}</td>
-                <td class="p-4">
+                <td class="p-4">${fechaAltaFormatted}</td>
+                <td class="p-4">${estado}</td>
+                <td class="p-4 flex items-center space-x-4">
+                    <button data-id="${student.id}" class="edit-student-btn text-blue-600 hover:text-blue-800 font-semibold">Editar</button>
                     <button data-id="${student.id}" class="delete-student-btn text-red-500 hover:text-red-700 font-semibold">Eliminar</button>
                 </td>
             `;
             
-            // Añadir event listener al botón de eliminar
+            row.querySelector('.edit-student-btn').addEventListener('click', () => 
+                handleEditStudent(student.id)
+            );
             row.querySelector('.delete-student-btn').addEventListener('click', () => 
                 handleDeleteStudent(student.id)
             );
@@ -745,7 +759,74 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-   
+
+    let editStudentModal; // Declara la variable para el modal de edición
+
+    function setupEditStudentModal() {
+        // Inicializa el modal
+        editStudentModal = new Modal('edit-student-modal');
+        
+        const editForm = document.getElementById('edit-student-form');
+        const clearFechaBajaBtn = document.getElementById('clear-fecha-baja-btn');
+
+        // Limpiar fecha de baja (reactivar alumno)
+        clearFechaBajaBtn.addEventListener('click', () => {
+            document.getElementById('edit-student-fecha-baja').value = '';
+        });
+
+        // Guardar cambios del formulario de edición
+        editForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const studentId = document.getElementById('edit-student-id').value;
+            const student = await Student.findById(studentId);
+
+            if (student) {
+                // Recoger datos del formulario
+                student.name = document.getElementById('edit-student-name').value;
+                student.email = document.getElementById('edit-student-email').value;
+                student.phone = document.getElementById('edit-student-phone').value;
+                
+                const fechaBajaValue = document.getElementById('edit-student-fecha-baja').value;
+                student.fechaBaja = fechaBajaValue ? new Date(fechaBajaValue) : null;
+
+                try {
+                    await student.save();
+                    NotificationUtils.success('Alumno actualizado correctamente');
+                    editStudentModal.hide();
+                    await renderStudentsTable(); // Actualizar la tabla
+                } catch (error) {
+                    NotificationUtils.error('Error al actualizar: ' + error.message);
+                }
+            }
+        });
+    }
+
+    async function handleEditStudent(studentId) {
+        const student = await Student.findById(studentId);
+        if (student) {
+            // Rellenar el formulario del modal con los datos del alumno
+            document.getElementById('edit-student-id').value = student.id;
+            document.getElementById('edit-student-name').value = student.name;
+            document.getElementById('edit-student-email').value = student.email;
+            document.getElementById('edit-student-phone').value = student.phone;
+            
+            // Formatear la fecha de baja para el input (YYYY-MM-DD)
+            if (student.fechaBaja) {
+                const date = new Date(student.fechaBaja);
+                // Ajustar por la zona horaria para evitar que se reste un día
+                date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+                document.getElementById('edit-student-fecha-baja').value = date.toISOString().split('T')[0];
+            } else {
+                document.getElementById('edit-student-fecha-baja').value = '';
+            }
+            
+            editStudentModal.show(); // Mostrar el modal
+        }
+    }
+
+
+
     async function handleExportData() {
         try {
             console.log("Iniciando exportación de datos...");
