@@ -173,6 +173,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Navegación
     navHorario.addEventListener('click', () => switchView('horario'));
     navAlumnos.addEventListener('click', () => switchView('alumnos'));
+    document.getElementById('nav-configuracion').addEventListener('click', () => switchView('configuracion'));
+
 
     // Navegación semanal
     prevWeekBtn.addEventListener('click', () => {
@@ -1015,24 +1017,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --- View Management ---
+
     async function switchView(viewName) {
         const isHorario = viewName === 'horario';
+        const isAlumnos = viewName === 'alumnos';
+        const isConfiguracion = viewName === 'configuracion';
         
-        // Toggle views visibility
-        viewHorario.classList.toggle('hidden', !isHorario);
-        viewAlumnos.classList.toggle('hidden', isHorario);
+        // Ocultar todas las vistas
+        viewHorario.classList.add('hidden');
+        viewAlumnos.classList.add('hidden');
+        document.getElementById('view-configuracion').classList.add('hidden');
         
-        // Update navigation
-        navHorario.classList.toggle('border-white', isHorario);
-        navHorario.classList.toggle('border-transparent', !isHorario);
-        navAlumnos.classList.toggle('border-white', !isHorario);
-        navAlumnos.classList.toggle('border-transparent', isHorario);
+        // Actualizar estilo de todos los botones de navegación
+        navHorario.classList.replace('border-white', 'border-transparent');
+        navAlumnos.classList.replace('border-white', 'border-transparent');
+        document.getElementById('nav-configuracion').classList.replace('border-white', 'border-transparent');
 
-        // Render appropriate view
+        // Mostrar la vista y activar el botón seleccionado
         if (isHorario) {
+            viewHorario.classList.remove('hidden');
+            navHorario.classList.replace('border-transparent', 'border-white');
             await renderCalendar();
-        } else {
+        } else if (isAlumnos) {
+            viewAlumnos.classList.remove('hidden');
+            navAlumnos.classList.replace('border-transparent', 'border-white');
             await renderStudentsTable();
+        } else if (isConfiguracion) {
+            document.getElementById('view-configuracion').classList.remove('hidden');
+            document.getElementById('nav-configuracion').classList.replace('border-transparent', 'border-white');
         }
     }
 
