@@ -779,7 +779,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             e.preventDefault();
             
             const studentId = document.getElementById('edit-student-id').value;
-            const student = await Student.findById(studentId);
+            const student = await Student.findById(parseInt(studentId, 10));
 
             if (student) {
                 // Recoger datos del formulario
