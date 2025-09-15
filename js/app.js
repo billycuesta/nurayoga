@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let classModal, studentModal, templateModal, oneOffModal;
     let studentForm, templateForm, oneOffForm;
     let studentsTable, calendar;
+    let studentDetailsModal;
 
     // --- UI Elements (para compatibilidad con HTML existente) ---
     const navHorario = document.getElementById('nav-horario');
@@ -69,6 +70,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         studentModal = new Modal('new-student-modal');
         templateModal = new Modal('schedule-template-modal');
         oneOffModal = new Modal('one-off-class-modal');
+        studentDetailsModal = new Modal('student-details-modal'); 
 
         // Formularios con validación
         studentForm = new FormHandler('new-student-form', {
@@ -421,50 +423,57 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
 
-    async function renderStudentsTable(filter = '') {
-        const tbody = document.getElementById('students-table-body');
-        tbody.innerHTML = '';
-        
-        const students = await Student.findAll();
-        const filteredStudents = filter ? SearchUtils.filterStudents(students, filter) : students;
-        
-        if (filteredStudents.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center p-8 text-gray-500">No se encontraron alumnos.</td></tr>';
-            return;
-        }
 
-        filteredStudents.forEach(student => {
-            const row = DOMUtils.createElement('tr', 'border-b hover:bg-gray-50');
-            
-            // --- LÍNEAS CORREGIDAS ---
-            const fechaAltaFormatted = student.fechaAlta ? new Date(student.fechaAlta).toLocaleDateString('es-ES') : '-';
-            const estado = student.fechaBaja 
-                ? `<span class="text-red-500 font-semibold">De baja (${new Date(student.fechaBaja).toLocaleDateString('es-ES')})</span>` 
-                : '<span class="text-green-600 font-semibold">Activo</span>';
-            // --- FIN DE LA CORRECCIÓN ---
-
-            row.innerHTML = `
-                <td class="p-4">${student.name}</td>
-                <td class="p-4">${student.email || '-'}</td>
-                <td class="p-4">${student.phone || '-'}</td>
-                <td class="p-4">${fechaAltaFormatted}</td>
-                <td class="p-4">${estado}</td>
-                <td class="p-4 flex items-center space-x-4">
-                    <button data-id="${student.id}" class="edit-student-btn text-blue-600 hover:text-blue-800 font-semibold">Editar</button>
-                    <button data-id="${student.id}" class="delete-student-btn text-red-500 hover:text-red-700 font-semibold">Eliminar</button>
-                </td>
-            `;
-            
-            row.querySelector('.edit-student-btn').addEventListener('click', () => 
-                handleEditStudent(student.id)
-            );
-            row.querySelector('.delete-student-btn').addEventListener('click', () => 
-                handleDeleteStudent(student.id)
-            );
-            
-            tbody.appendChild(row);
-        });
+async function renderStudentsTable(filter = '') {
+    const tbody = document.getElementById('students-table-body');
+    tbody.innerHTML = '';
+    
+    const students = await Student.findAll();
+    const filteredStudents = filter ? SearchUtils.filterStudents(students, filter) : students;
+    
+    if (filteredStudents.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center p-8 text-gray-500">No se encontraron alumnos.</td></tr>';
+        return;
     }
+
+    filteredStudents.forEach(student => {
+        // AÑADIMOS la clase 'cursor-pointer' para feedback visual
+        const row = DOMUtils.createElement('tr', 'border-b hover:bg-gray-50 cursor-pointer');
+        
+        const fechaAltaFormatted = student.fechaAlta ? new Date(student.fechaAlta).toLocaleDateString('es-ES') : '-';
+        const estado = student.fechaBaja 
+            ? `<span class="text-red-500 font-semibold">De baja (${new Date(student.fechaBaja).toLocaleDateString('es-ES')})</span>` 
+            : '<span class="text-green-600 font-semibold">Activo</span>';
+
+        row.innerHTML = `
+            <td class="p-4">${student.name}</td>
+            <td class="p-4">${student.email || '-'}</td>
+            <td class="p-4">${student.phone || '-'}</td>
+            <td class="p-4">${fechaAltaFormatted}</td>
+            <td class="p-4">${estado}</td>
+            <td class="p-4 flex items-center space-x-4">
+                <button data-id="${student.id}" class="edit-student-btn text-blue-600 hover:text-blue-800 font-semibold">Editar</button>
+                <button data-id="${student.id}" class="delete-student-btn text-red-500 hover:text-red-700 font-semibold">Eliminar</button>
+            </td>
+        `;
+        
+        row.querySelector('.edit-student-btn').addEventListener('click', () => handleEditStudent(student.id));
+        row.querySelector('.delete-student-btn').addEventListener('click', () => handleDeleteStudent(student.id));
+        
+        // ===== INICIO: LÓGICA DE CLIC EN LA FILA =====
+        row.addEventListener('click', (e) => {
+            // Si el clic fue en un botón, no hacemos nada
+            if (e.target.tagName === 'BUTTON') {
+                return;
+            }
+            // Si no, mostramos los detalles del alumno
+            showStudentDetails(student.id);
+        });
+        // ===== FIN: LÓGICA DE CLIC EN LA FILA =====
+        
+        tbody.appendChild(row);
+    });
+}
 
     async function renderTemplateEditor() {
         const templateDisplay = document.getElementById('template-display');
@@ -786,7 +795,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 student.name = document.getElementById('edit-student-name').value;
                 student.email = document.getElementById('edit-student-email').value;
                 student.phone = document.getElementById('edit-student-phone').value;
-                
+                student.fechaAlta = new Date(document.getElementById('edit-student-fecha-alta').value);
                 const fechaBajaValue = document.getElementById('edit-student-fecha-baja').value;
                 student.fechaBaja = fechaBajaValue ? new Date(fechaBajaValue) : null;
 
@@ -811,6 +820,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('edit-student-email').value = student.email;
             document.getElementById('edit-student-phone').value = student.phone;
             
+            if (student.fechaAlta) {
+                const date = new Date(student.fechaAlta);
+                // Ajustar por la zona horaria para evitar que se muestre el día anterior
+                date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+                document.getElementById('edit-student-fecha-alta').value = date.toISOString().split('T')[0];
+            }
             // Formatear la fecha de baja para el input (YYYY-MM-DD)
             if (student.fechaBaja) {
                 const date = new Date(student.fechaBaja);
@@ -1170,7 +1185,7 @@ async function handleSaveChangesFromClassModal() {
     }
 }
 
-    function setupModalFooterButtons() {
+function setupModalFooterButtons() {
         const modal = document.getElementById('class-modal');
         const classId = parseInt(modal.dataset.classId);
         const classType = modal.dataset.classType;
@@ -1192,6 +1207,50 @@ async function handleSaveChangesFromClassModal() {
                 handleDeleteOneOffClass(classId);
             }
         });
+    }
+
+        async function showStudentDetails(studentId) {
+        const student = await Student.findById(studentId);
+        if (!student) {
+            console.error("No se encontró al alumno");
+            return;
+        }
+
+        const classes = await student.getActiveClasses();
+        
+        document.getElementById('student-details-name').textContent = student.name;
+        
+        const recurringList = document.getElementById('student-recurring-classes-list');
+        const oneOffList = document.getElementById('student-one-off-classes-list');
+        
+        recurringList.innerHTML = '';
+        oneOffList.innerHTML = '';
+
+        // Rellenar lista de clases fijas
+        if (classes.recurring.length > 0) {
+            classes.recurring.forEach(clase => {
+                const dayName = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'][clase.day - 1];
+                const item = DOMUtils.createElement('div', 'bg-gray-100 p-2 rounded');
+                item.innerHTML = `<p class="font-semibold">${clase.name}</p><p class="text-sm text-gray-600">${dayName} a las ${clase.time}</p>`;
+                recurringList.appendChild(item);
+            });
+        } else {
+            recurringList.innerHTML = '<p class="text-gray-500">No está inscrito/a en ninguna clase fija.</p>';
+        }
+
+        // Rellenar lista de clases puntuales
+        if (classes.oneOff.length > 0) {
+            classes.oneOff.forEach(clase => {
+                const dateFormatted = new Date(clase.date + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+                const item = DOMUtils.createElement('div', 'bg-gray-100 p-2 rounded');
+                item.innerHTML = `<p class="font-semibold">${clase.name}</p><p class="text-sm text-gray-600">${dateFormatted} a las ${clase.time}</p>`;
+                oneOffList.appendChild(item);
+            });
+        } else {
+            oneOffList.innerHTML = '<p class="text-gray-500">No está inscrito/a en ninguna clase puntual.</p>';
+        }
+
+        studentDetailsModal.show();
     }
 
     // --- Initialize Application ---

@@ -369,6 +369,10 @@
                     <input type="tel" id="edit-student-phone" name="phone" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand">
                 </div>
                 <div>
+                    <label for="edit-student-fecha-alta" class="block text-sm font-medium text-gray-700">Fecha de Alta</label>
+                    <input type="date" id="edit-student-fecha-alta" name="fechaAlta" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand">
+                </div>
+                <div>
                     <label for="edit-student-fecha-baja" class="block text-sm font-medium text-gray-700">Fecha de Baja</label>
                     <input type="date" id="edit-student-fecha-baja" name="fechaBaja" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand">
                     <button type="button" id="clear-fecha-baja-btn" class="text-sm text-blue-600 hover:underline mt-1">Reactivar alumno (limpiar fecha)</button>
@@ -378,6 +382,32 @@
                      <button type="submit" class="btn-brand font-bold py-2 px-4 rounded-lg">Guardar Cambios</button>
                  </div>
             </form>
+        </div>
+    </div>
+    <div id="student-details-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
+            <div class="p-6 border-b flex justify-between items-center">
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-800">Detalle de Clases</h3>
+                    <p id="student-details-name" class="text-lg text-gray-600"></p>
+                </div>
+                <button id="close-student-details-modal" class="p-2 text-gray-400 hover:text-gray-700">&times;</button>
+            </div>
+            <div class="p-6 flex-grow overflow-y-auto space-y-6">
+                <div>
+                    <h4 class="font-semibold text-lg mb-3 text-gray-700">Clases Fijas Inscritas</h4>
+                    <div id="student-recurring-classes-list" class="space-y-2">
+                        </div>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-lg mb-3 text-gray-700">Clases Puntuales Inscritas</h4>
+                    <div id="student-one-off-classes-list" class="space-y-2">
+                        </div>
+                </div>
+            </div>
+            <div class="p-4 bg-gray-50 rounded-b-lg flex justify-end">
+                <button id="close-student-details-modal-btn" class="btn-secondary font-bold py-2 px-4 rounded-lg">Cerrar</button>
+        </div>
         </div>
     </div>
     
