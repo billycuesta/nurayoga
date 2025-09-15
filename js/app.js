@@ -1052,38 +1052,79 @@ async function handleDeleteAllStudents() {
         populateTeacherSelects();
     }
 
-    // --- View Management ---
-
     async function switchView(viewName) {
-        const isHorario = viewName === 'horario';
-        const isAlumnos = viewName === 'alumnos';
-        const isConfiguracion = viewName === 'configuracion';
-        
-        // Ocultar todas las vistas
-        viewHorario.classList.add('hidden');
-        viewAlumnos.classList.add('hidden');
-        document.getElementById('view-configuracion').classList.add('hidden');
-        
-        // Actualizar estilo de todos los botones de navegación
-        navHorario.classList.replace('border-white', 'border-transparent');
-        navAlumnos.classList.replace('border-white', 'border-transparent');
-        document.getElementById('nav-configuracion').classList.replace('border-white', 'border-transparent');
+    const isHorario = viewName === 'horario';
+    const isAlumnos = viewName === 'alumnos';
+    const isConfiguracion = viewName === 'configuracion';
+    
+    // Ocultar todas las vistas
+    document.getElementById('view-horario').classList.add('hidden');
+    document.getElementById('view-alumnos').classList.add('hidden');
+    document.getElementById('view-configuracion').classList.add('hidden');
+    
+    // Actualizar estilo de todos los botones de navegación
+    document.getElementById('nav-horario').classList.replace('border-white', 'border-transparent');
+    document.getElementById('nav-alumnos').classList.replace('border-white', 'border-transparent');
+    document.getElementById('nav-configuracion').classList.replace('border-white', 'border-transparent');
 
-        // Mostrar la vista y activar el botón seleccionado
-        if (isHorario) {
-            viewHorario.classList.remove('hidden');
-            navHorario.classList.replace('border-transparent', 'border-white');
-            await renderCalendar();
-        } else if (isAlumnos) {
-            viewAlumnos.classList.remove('hidden');
-            navAlumnos.classList.replace('border-transparent', 'border-white');
-            await renderStudentsTable();
-        } else if (isConfiguracion) {
-            document.getElementById('view-configuracion').classList.remove('hidden');
-            document.getElementById('nav-configuracion').classList.replace('border-transparent', 'border-white');
-        }
+    // Mostrar la vista y activar el botón seleccionado
+    if (isHorario) {
+        document.getElementById('view-horario').classList.remove('hidden');
+        document.getElementById('nav-horario').classList.replace('border-transparent', 'border-white');
+        await renderCalendar();
+    } else if (isAlumnos) {
+        document.getElementById('view-alumnos').classList.remove('hidden');
+        document.getElementById('nav-alumnos').classList.replace('border-transparent', 'border-white');
+        // Llamamos a las dos funciones al entrar en la vista de alumnos
+        await renderStudentStats();
+        await renderStudentsTable();
+    } else if (isConfiguracion) {
+        document.getElementById('view-configuracion').classList.remove('hidden');
+        document.getElementById('nav-configuracion').classList.replace('border-transparent', 'border-white');
+    }
     }
 
+async function renderStudentStats() {
+    // Primero, mostramos un estado de carga
+    document.getElementById('stat-total-students').textContent = '-';
+    document.getElementById('stat-paid-students').textContent = '-';
+    document.getElementById('stat-attending-one-class').textContent = '-';
+    document.getElementById('stat-attending-multiple-classes').textContent = '-';
+
+    const students = await Student.findAll();
+    
+    // 1. Total de Alumnos
+    const totalStudents = students.length;
+
+    // 2. Alumnos que han pagado este mes
+    const currentMonthKey = `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`;
+    const paidStudents = students.filter(s => s.getPaymentDateForMonth(currentMonthKey)).length;
+
+    // 3. y 4. Alumnos que asisten a clases
+    const [inscriptions, recurringInscriptions] = await Promise.all([
+        window.db.getAllInscriptions(),
+        window.db.getAllRecurringInscriptions()
+    ]);
+
+    const inscriptionCounts = {};
+    const allStudentIdsWithInscriptions = [
+        ...inscriptions.map(i => i.studentId),
+        ...recurringInscriptions.map(i => i.studentId)
+    ];
+
+    allStudentIdsWithInscriptions.forEach(id => {
+        inscriptionCounts[id] = (inscriptionCounts[id] || 0) + 1;
+    });
+
+    const attendingOneOrMore = Object.keys(inscriptionCounts).length;
+    const attendingMultiple = Object.values(inscriptionCounts).filter(count => count > 1).length;
+
+    // Actualizamos la interfaz con los valores calculados
+    document.getElementById('stat-total-students').textContent = totalStudents;
+    document.getElementById('stat-paid-students').textContent = paidStudents;
+    document.getElementById('stat-attending-one-class').textContent = attendingOneOrMore;
+    document.getElementById('stat-attending-multiple-classes').textContent = attendingMultiple;
+}
 
     // AÑADE ESTA NUEVA FUNCIÓN
 async function handleSaveChangesFromClassModal() {
@@ -1223,10 +1264,6 @@ async function checkAndResetPayments() {
     }
 }
 
-/**
- * Maneja el clic en la celda de pago para cambiar el estado.
- * @param {number} studentId - El ID del alumno a modificar.
- */
 async function handleTogglePayment(studentId) {
     const student = await Student.findById(studentId);
     if (!student) return;
@@ -1235,8 +1272,12 @@ async function handleTogglePayment(studentId) {
         const currentMonthKey = `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`;
         await student.togglePaymentForMonth(currentMonthKey);
         
-        // Refrescamos la tabla para que se vea el cambio.
+        // AÑADE ESTA LÍNEA para refrescar las tarjetas de estadísticas
+        await renderStudentStats(); 
+        
+        // Esta línea ya existía y refresca la tabla de alumnos
         await renderStudentsTable(document.getElementById('student-search-input').value);
+
     } catch (error) {
         console.error("Error al cambiar el estado de pago:", error);
         NotificationUtils.error('No se pudo actualizar el pago.');
