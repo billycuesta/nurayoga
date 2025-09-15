@@ -31,38 +31,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     const nextWeekBtn = document.getElementById('next-week');
     const currentWeekDisplay = document.getElementById('current-week-display');
 
+
+
+
+
     // --- Initialization ---
     async function initializeApp() {
-        try {
-            // Inicializar base de datos
-            await window.db.init();
+    try {
+        // Inicializar base de datos
+        await window.db.init();
 
-            // Configurar componentes UI
-            setupUIComponents();
-            setupEditStudentModal();
-            setupEventListeners();
-            setupFormValidators();
-            populateTimeSelects();
+        // Comprueba y resetea los pagos mensuales
+        await checkAndResetPayments();
 
+        // Configurar componentes UI
+        setupUIComponents();
+        setupEditStudentModal();
+        setupEventListeners();
 
-            document.getElementById('export-data-btn').addEventListener('click', handleExportData);
-            
-            const importInput = document.getElementById('import-data-input');
-            document.getElementById('import-data-btn').addEventListener('click', () => {
-                importInput.click(); // Abrir el diálogo de selección de archivo
-            });
-            importInput.addEventListener('change', handleImportData);
+        // Cargar vista inicial
+        await switchView('horario');
 
-
-            // Cargar vista inicial
-            await switchView('horario');
-
-            NotificationUtils.success('Aplicación inicializada correctamente');
-        } catch (error) {
-            console.error("Initialization failed:", error);
-            NotificationUtils.error('Error al inicializar la aplicación');
-        }
+        NotificationUtils.success('Aplicación inicializada correctamente');
+    } catch (error) {
+        console.error("Initialization failed:", error);
+        NotificationUtils.error('Error al inicializar la aplicación');
     }
+}
 
     function setupUIComponents() {
         // Modales
@@ -172,158 +167,65 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    function setupEventListeners() {
+function setupEventListeners() {
     // Navegación
-    navHorario.addEventListener('click', () => switchView('horario'));
-    navAlumnos.addEventListener('click', () => switchView('alumnos'));
+    document.getElementById('nav-horario').addEventListener('click', () => switchView('horario'));
+    document.getElementById('nav-alumnos').addEventListener('click', () => switchView('alumnos'));
     document.getElementById('nav-configuracion').addEventListener('click', () => switchView('configuracion'));
-
-
-    // Navegación semanal
-    prevWeekBtn.addEventListener('click', () => {
-        currentDate.setDate(currentDate.getDate() - 7);
-        renderCalendar();
-    });
-    
-    nextWeekBtn.addEventListener('click', () => {
-        currentDate.setDate(currentDate.getDate() + 7);
-        renderCalendar();
-    });
-
-    // Botones para abrir modales
-    document.getElementById('open-new-student-modal').addEventListener('click', () => {
-        studentModal.show();
-    });
-
-    document.getElementById('open-template-modal-btn').addEventListener('click', () => {
-        resetTemplateForm();
-        templateModal.show();
-    });
-
-    document.getElementById('open-one-off-class-modal-btn').addEventListener('click', () => {
-        resetOneOffForm();
-        oneOffModal.show();
-    });
 
     // Búsqueda de estudiantes
     document.getElementById('student-search-input').addEventListener('input', (e) => {
         renderStudentsTable(e.target.value);
     });
 
-    // Limpiar inscripciones
-    document.getElementById('clear-all-inscriptions-btn').addEventListener('click', 
-        handleClearAllInscriptions
-    );
+    // Botones para abrir modales principales
+    document.getElementById('open-new-student-modal').addEventListener('click', () => studentModal.show());
+    document.getElementById('open-template-modal-btn').addEventListener('click', () => {
+        resetTemplateForm();
+        templateModal.show();
+    });
+    document.getElementById('open-one-off-class-modal-btn').addEventListener('click', () => {
+        resetOneOffForm();
+        oneOffModal.show();
+    });
 
-    // --- Definición de la función que configura los formularios ---
-    // Esta función anidada contiene toda la lógica para guardar los formularios
-    function setupFormSubmissions() {
-        // Formulario de estudiante
-        studentForm.onSubmit(async (data) => {
-            try {
-                const student = new Student({
-                    name: data['new-student-name'],
-                    email: data['new-student-email'],
-                    phone: data['new-student-phone']
-                });
-                await student.save();
-                
-                NotificationUtils.success('Estudiante creado correctamente');
-                studentModal.hide();
-                await renderStudentsTable();
-            } catch (error) {
-                console.error("Error creating student:", error);
-                NotificationUtils.error('Error al crear estudiante: ' + error.message);
+    // Botones de la sección de Configuración
+    document.getElementById('export-data-btn').addEventListener('click', handleExportData);
+    const importInput = document.getElementById('import-data-input');
+    document.getElementById('import-data-btn').addEventListener('click', () => {
+        importInput.click();
+    });
+    importInput.addEventListener('change', handleImportData);
+    document.getElementById('clear-all-inscriptions-btn').addEventListener('click', handleClearAllInscriptions);
+    
+    // Listener para el nuevo botón de eliminar todos los alumnos
+    document.getElementById('delete-all-students-btn').addEventListener('click', handleDeleteAllStudents);
+
+    // Event delegation para la tabla de alumnos
+    const studentsTableBody = document.getElementById('students-table-body');
+    studentsTableBody.addEventListener('click', (e) => {
+        const target = e.target;
+        
+        const paymentCell = target.closest('.payment-status-cell');
+        if (paymentCell) {
+            const studentId = parseInt(paymentCell.parentElement.dataset.studentId);
+            if (studentId) {
+                handleTogglePayment(studentId);
             }
-        });
-    
-        // Formulario de clase template
-        templateForm.onSubmit(async (data) => {
-            try {
-                const classId = document.getElementById('template-class-id').value;
-                
-                const hour = document.getElementById('template-time-hour').value;
-                const minute = document.getElementById('template-time-minute').value;
-                const combinedTime = `${hour}:${minute}`;
-    
-                const classDetails = {
-                    day: parseInt(data['template-day']),
-                    time: combinedTime,
-                    name: data['template-name'],
-                    teacher: data['template-teacher-select'],
-                    capacity: parseInt(data['template-capacity'])
-                };
-                
-                let recurringClass;
-                if (classId) {
-                    recurringClass = await RecurringClass.findById(parseInt(classId));
-                    if (recurringClass) {
-                        Object.assign(recurringClass, classDetails);
-                    }
-                } else {
-                    recurringClass = new RecurringClass(classDetails);
+            return;
+        }
+        
+        const studentRow = target.closest('.student-row-clickable');
+        if (studentRow) {
+            const studentId = parseInt(studentRow.querySelector('[data-student-id]').dataset.studentId);
+            if (studentId) {
+                if (!target.closest('button')) {
+                    showStudentDetails(studentId);
                 }
-    
-                await recurringClass.save();
-                
-                NotificationUtils.success('Clase guardada correctamente');
-                await renderTemplateEditor();
-                await renderCalendar();
-                resetTemplateForm();
-            } catch (error) {
-                console.error("Error saving template class:", error);
-                NotificationUtils.error('Error al guardar clase: ' + error.message);
             }
-        });
-    
-        // Formulario de clase puntual
-        oneOffForm.onSubmit(async (data) => {
-            try {
-                const classId = document.getElementById('one-off-class-id').value;
-
-                const hour = document.getElementById('one-off-time-hour').value;
-                const minute = document.getElementById('one-off-time-minute').value;
-                const combinedTime = `${hour}:${minute}`;
-    
-                const classDetails = {
-                    date: data['one-off-date'],
-                    time: combinedTime,
-                    name: data['one-off-name'],
-                    teacher: data['one-off-teacher-select'],
-                    capacity: parseInt(data['one-off-capacity'])
-                };
-    
-                let oneOffClass;
-                if (classId) {
-                    oneOffClass = await OneOffClass.findById(parseInt(classId));
-                    if (oneOffClass) {
-                        Object.assign(oneOffClass, classDetails);
-                    }
-                } else {
-                    oneOffClass = new OneOffClass(classDetails);
-                }
-    
-                await oneOffClass.save();
-                
-                NotificationUtils.success('Clase puntual guardada correctamente');
-                await renderCalendar();
-                oneOffModal.hide();
-                resetOneOffForm();
-            } catch (error) {
-                console.error("Error saving one-off class:", error);
-                NotificationUtils.error('Error al guardar clase: ' + error.message);
-            }
-        });
-    }
-    
-    // Selects de profesores
-    setupTeacherSelects();
-
-    // --- Llamada a la función que configura los formularios ---
-    // Esta es la línea que faltaba para que los botones "Añadir" y "Guardar" funcionen.
-    setupFormSubmissions(); 
-    }
-
+        }
+    });
+}
     
     function setupTeacherSelects() {
         const templateSelect = document.getElementById('template-teacher-select');
@@ -423,27 +325,53 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
 
-
 async function renderStudentsTable(filter = '') {
     const tbody = document.getElementById('students-table-body');
     tbody.innerHTML = '';
     
     const students = await Student.findAll();
-    const filteredStudents = filter ? SearchUtils.filterStudents(students, filter) : students;
+    const filteredStudents = filter ? students.filter(s => s.name.toLowerCase().includes(filter.toLowerCase()) || (s.email && s.email.toLowerCase().includes(filter.toLowerCase()))) : students;
     
     if (filteredStudents.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center p-8 text-gray-500">No se encontraron alumnos.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-gray-500">No se encontraron alumnos.</td></tr>';
         return;
     }
 
+    const currentMonthKey = `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`;
+    const currentMonthName = new Date().toLocaleDateString('es-ES', { month: 'long' });
+
     filteredStudents.forEach(student => {
-        // AÑADIMOS la clase 'cursor-pointer' para feedback visual
-        const row = DOMUtils.createElement('tr', 'border-b hover:bg-gray-50 cursor-pointer');
+        const row = document.createElement('tr');
+        row.className = 'border-b hover:bg-gray-50';
         
         const fechaAltaFormatted = student.fechaAlta ? new Date(student.fechaAlta).toLocaleDateString('es-ES') : '-';
         const estado = student.fechaBaja 
             ? `<span class="text-red-500 font-semibold">De baja (${new Date(student.fechaBaja).toLocaleDateString('es-ES')})</span>` 
             : '<span class="text-green-600 font-semibold">Activo</span>';
+        
+        const paymentDate = student.getPaymentDateForMonth(currentMonthKey);
+        let paymentStatusHTML = '';
+
+        if (paymentDate) {
+            // Si hay fecha, está pagado. La formateamos.
+            const formattedDate = new Date(paymentDate).toLocaleDateString('es-ES');
+            paymentStatusHTML = `
+                <div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-green-200">
+                    <span class="font-semibold text-green-600">
+                        Pagado el ${formattedDate}
+                    </span>
+                </div>
+            `;
+        } else {
+            // Si no hay fecha, no está pagado.
+            paymentStatusHTML = `
+                <div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-red-200">
+                    <span class="font-semibold text-red-500">
+                        No Pagado
+                    </span>
+                </div>
+            `;
+        }
 
         row.innerHTML = `
             <td class="p-4">${student.name}</td>
@@ -451,25 +379,17 @@ async function renderStudentsTable(filter = '') {
             <td class="p-4">${student.phone || '-'}</td>
             <td class="p-4">${fechaAltaFormatted}</td>
             <td class="p-4">${estado}</td>
+            <td class="p-4" data-student-id="${student.id}">${paymentStatusHTML}</td>
             <td class="p-4 flex items-center space-x-4">
-                <button data-id="${student.id}" class="edit-student-btn text-blue-600 hover:text-blue-800 font-semibold">Editar</button>
-                <button data-id="${student.id}" class="delete-student-btn text-red-500 hover:text-red-700 font-semibold">Eliminar</button>
+                <button class="edit-student-btn text-blue-600 hover:text-blue-800 font-semibold">Editar</button>
+                <button class="delete-student-btn text-red-500 hover:text-red-700 font-semibold">Eliminar</button>
             </td>
         `;
         
         row.querySelector('.edit-student-btn').addEventListener('click', () => handleEditStudent(student.id));
         row.querySelector('.delete-student-btn').addEventListener('click', () => handleDeleteStudent(student.id));
         
-        // ===== INICIO: LÓGICA DE CLIC EN LA FILA =====
-        row.addEventListener('click', (e) => {
-            // Si el clic fue en un botón, no hacemos nada
-            if (e.target.tagName === 'BUTTON') {
-                return;
-            }
-            // Si no, mostramos los detalles del alumno
-            showStudentDetails(student.id);
-        });
-        // ===== FIN: LÓGICA DE CLIC EN LA FILA =====
+        row.classList.add('student-row-clickable');
         
         tbody.appendChild(row);
     });
@@ -840,7 +760,27 @@ async function renderStudentsTable(filter = '') {
         }
     }
 
-
+async function handleDeleteAllStudents() {
+    const confirmation1 = confirm("ADVERTENCIA: Estás a punto de borrar a TODOS los alumnos y TODAS sus inscripciones. Esta acción es irreversible. ¿Deseas continuar?");
+    
+    if (confirmation1) {
+        const confirmation2 = confirm("SEGUNDA ADVERTENCIA: Por favor, confirma una vez más que quieres eliminar permanentemente todos los datos de los alumnos.");
+        
+        if (confirmation2) {
+            try {
+                await window.db.clearAllStudentsAndRelatedData();
+                NotificationUtils.success('Todos los alumnos y sus inscripciones han sido eliminados.');
+                
+                // Refrescar las vistas para mostrar que están vacías
+                await renderStudentsTable();
+                await renderCalendar();
+            } catch (error) {
+                console.error("Error al eliminar todos los alumnos:", error);
+                NotificationUtils.error('Hubo un error durante la eliminación.');
+            }
+        }
+    }
+}
 
     async function handleExportData() {
         try {
@@ -1209,7 +1149,7 @@ function setupModalFooterButtons() {
         });
     }
 
-        async function showStudentDetails(studentId) {
+ async function showStudentDetails(studentId) {
         const student = await Student.findById(studentId);
         if (!student) {
             console.error("No se encontró al alumno");
@@ -1252,6 +1192,56 @@ function setupModalFooterButtons() {
 
         studentDetailsModal.show();
     }
+
+async function checkAndResetPayments() {
+    const today = new Date();
+    // Formato "YYYY-MM", por ejemplo "2025-09"
+    const currentMonthKey = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}`;
+    
+    const lastResetMonth = localStorage.getItem('lastPaymentResetMonth');
+
+    // Si el mes actual es diferente al último mes reseteado
+    if (currentMonthKey !== lastResetMonth) {
+        console.log(`Nuevo mes detectado (${currentMonthKey}). Inicializando estados de pago.`);
+        
+        const students = await Student.findAll();
+        const updatePromises = [];
+
+        for (const student of students) {
+            // Si el alumno no tiene una entrada para el mes actual, se la creamos como 'null' (No pagado)
+            if (student.payments[currentMonthKey] === undefined) {
+                student.payments[currentMonthKey] = null; // Cambiado de 'false' a 'null'
+                updatePromises.push(student.save());
+            }
+        }
+
+        await Promise.all(updatePromises);
+        
+        // Actualizamos el localStorage para no volver a hacerlo este mes
+        localStorage.setItem('lastPaymentResetMonth', currentMonthKey);
+        console.log("Estados de pago inicializados.");
+    }
+}
+
+/**
+ * Maneja el clic en la celda de pago para cambiar el estado.
+ * @param {number} studentId - El ID del alumno a modificar.
+ */
+async function handleTogglePayment(studentId) {
+    const student = await Student.findById(studentId);
+    if (!student) return;
+
+    try {
+        const currentMonthKey = `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`;
+        await student.togglePaymentForMonth(currentMonthKey);
+        
+        // Refrescamos la tabla para que se vea el cambio.
+        await renderStudentsTable(document.getElementById('student-search-input').value);
+    } catch (error) {
+        console.error("Error al cambiar el estado de pago:", error);
+        NotificationUtils.error('No se pudo actualizar el pago.');
+    }
+}
 
     // --- Initialize Application ---
     await initializeApp();

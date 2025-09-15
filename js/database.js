@@ -247,6 +247,16 @@ class Database {
         
         return inscriptions.filter(i => i[filterKey] === classId);
     }
+
+    async clearAllStudentsAndRelatedData() {
+        console.log("Borrando todos los alumnos y sus datos relacionados...");
+        // Borra los datos de las tres tablas relacionadas
+        return Promise.all([
+            this.clear(this.STORES.students),
+            this.clear(this.STORES.inscriptions),
+            this.clear(this.STORES.recurringInscriptions)
+        ]);
+    }
 }
 
 // Crear instancia global

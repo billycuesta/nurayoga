@@ -1,4 +1,5 @@
 // models/Student.js
+
 class Student {
     constructor(data = {}) {
         this.id = data.id || null;
@@ -7,65 +8,55 @@ class Student {
         this.phone = data.phone || '';
         this.fechaAlta = data.fechaAlta ? new Date(data.fechaAlta) : new Date();
         this.fechaBaja = data.fechaBaja ? new Date(data.fechaBaja) : null;
+        // Objeto para guardar pagos: {"YYYY-MM": "ISO_DATE_STRING" | null}
+        this.payments = data.payments || {};
     }
 
-    // Validaciones
+    /**
+     * Devuelve la fecha de pago para un mes específico.
+     * @param {string} yearMonth - El mes en formato "YYYY-MM".
+     * @returns {string|null} - La fecha en formato ISO si está pagado, o null si no.
+     */
+    getPaymentDateForMonth(yearMonth) {
+        return this.payments[yearMonth] || null;
+    }
+
+    /**
+     * Cambia el estado de pago para un mes específico y guarda el alumno.
+     * Si no está pagado, guarda la fecha actual. Si ya está pagado, lo resetea a null.
+     * @param {string} yearMonth - El mes en formato "YYYY-MM".
+     */
+    async togglePaymentForMonth(yearMonth) {
+        const paymentDate = this.getPaymentDateForMonth(yearMonth);
+
+        if (paymentDate) {
+            // Si ya hay una fecha, significa que está pagado. Lo reseteamos.
+            this.payments[yearMonth] = null;
+        } else {
+            // Si no está pagado, guardamos la fecha y hora actual en formato ISO.
+            this.payments[yearMonth] = new Date().toISOString();
+        }
+        
+        await this.save(); // Guarda el alumno con el nuevo estado de pago.
+    }
+
     validate() {
         const errors = [];
-        
         if (!this.name || this.name.trim().length === 0) {
             errors.push('El nombre es obligatorio');
         }
-        
         if (this.name.length > 100) {
             errors.push('El nombre no puede tener más de 100 caracteres');
         }
-        
-        if (this.email && !this.isValidEmail(this.email)) {
+        if (this.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email)) {
             errors.push('El formato del email no es válido');
         }
-        
-        if (this.phone && !this.isValidPhone(this.phone)) {
-            errors.push('El formato del teléfono no es válido');
-        }
-        
         return {
             isValid: errors.length === 0,
             errors: errors
         };
     }
-    
-    isValidEmail(email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
-    }
-    
-    isValidPhone(phone) {
-        // Acepta formatos: +34 xxx xxx xxx, 6xx xxx xxx, 9xx xxx xxx
-        const phoneRegex = /^(\+34\s?)?[6-9]\d{8}$/;
-        const cleanPhone = phone.replace(/\s/g, '');
-        return phoneRegex.test(cleanPhone);
-    }
 
-    // Preparar datos para guardar en DB
-    toDBFormat() {
-        this.updatedAt = new Date().toISOString();
-        const data = {
-            name: this.name.trim(),
-            email: this.email.trim(),
-            phone: this.phone.trim(),
-            createdAt: this.createdAt,
-            updatedAt: this.updatedAt
-        };
-        
-        if (this.id) {
-            data.id = this.id;
-        }
-        
-        return data;
-    }
-
-    // Métodos de consulta que usan la base de datos
     async getInscriptions() {
         if (!this.id) return { oneOff: [], recurring: [] };
         return await window.db.getStudentInscriptions(this.id);
@@ -79,13 +70,11 @@ class Student {
         ]);
 
         const recurringClasses = inscriptions.recurring.map(inscription => {
-            const template = scheduleTemplate.find(t => t.id === inscription.templateId);
-            return template ? { ...template, type: 'recurring', inscriptionId: inscription.id } : null;
+            return scheduleTemplate.find(t => t.id === inscription.templateId);
         }).filter(Boolean);
 
         const oneOffClassesData = inscriptions.oneOff.map(inscription => {
-            const oneOffClass = oneOffClasses.find(c => c.id === inscription.oneOffClassId);
-            return oneOffClass ? { ...oneOffClass, type: 'one-off', inscriptionId: inscription.id } : null;
+            return oneOffClasses.find(c => c.id === inscription.oneOffClassId);
         }).filter(Boolean);
 
         return {
@@ -95,22 +84,18 @@ class Student {
         };
     }
 
-    // Métodos de acción
     async save() {
         const validation = this.validate();
         if (!validation.isValid) {
             throw new Error(`Datos inválidos: ${validation.errors.join(', ')}`);
         }
-
         const data = this.toDBFormat();
-        
         if (this.id) {
             await window.db.updateStudent(data);
         } else {
             const newId = await window.db.addStudent(data);
             this.id = newId;
         }
-        
         return this;
     }
 
@@ -118,12 +103,25 @@ class Student {
         if (!this.id) {
             throw new Error('No se puede eliminar un estudiante sin ID');
         }
-        
         await window.db.deleteStudent(this.id);
         return true;
     }
 
-    // Métodos estáticos para crear/buscar estudiantes
+    toDBFormat() {
+        const data = {
+            name: this.name.trim(),
+            email: this.email.trim(),
+            phone: this.phone.trim(),
+            fechaAlta: this.fechaAlta.toISOString(),
+            fechaBaja: this.fechaBaja ? this.fechaBaja.toISOString() : null,
+            payments: this.payments
+        };
+        if (this.id) {
+            data.id = this.id;
+        }
+        return data;
+    }
+
     static async findById(id) {
         const students = await window.db.getAllStudents();
         const studentData = students.find(s => s.id === id);
@@ -133,84 +131,6 @@ class Student {
     static async findAll() {
         const studentsData = await window.db.getAllStudents();
         return studentsData.map(data => new Student(data));
-    }
-
-    static async search(query) {
-        const students = await Student.findAll();
-        const lowerQuery = query.toLowerCase();
-        
-        return students.filter(student => 
-            student.name.toLowerCase().includes(lowerQuery) ||
-            student.email.toLowerCase().includes(lowerQuery)
-        );
-    }
-
-    static async create(data) {
-        const student = new Student(data);
-        return await student.save();
-    }
-
-    // Métodos de utilidad
-    getDisplayName() {
-        return this.name;
-    }
-
-    getInitials() {
-        return this.name
-            .split(' ')
-            .map(word => word.charAt(0))
-            .join('')
-            .toUpperCase()
-            .substring(0, 2);
-    }
-
-    hasEmail() {
-        return this.email && this.email.trim().length > 0;
-    }
-
-    hasPhone() {
-        return this.phone && this.phone.trim().length > 0;
-    }
-
-    // Método para obtener estadísticas del estudiante
-    async getStats() {
-        const classes = await this.getActiveClasses();
-        const inscriptions = await this.getInscriptions();
-        
-        return {
-            totalClasses: classes.total,
-            recurringClasses: classes.recurring.length,
-            oneOffClasses: classes.oneOff.length,
-            totalInscriptions: inscriptions.oneOff.length + inscriptions.recurring.length,
-            hasContactInfo: this.hasEmail() || this.hasPhone()
-        };
-    }
-
-    // Serializar para JSON
-    toJSON() {
-        return {
-            id: this.id,
-            name: this.name,
-            email: this.email,
-            phone: this.phone,
-            createdAt: this.createdAt,
-            updatedAt: this.updatedAt
-        };
-    }
-        toDBFormat() {
-        const data = {
-            name: this.name.trim(),
-            email: this.email.trim(),
-            phone: this.phone.trim(),
-            fechaAlta: this.fechaAlta.toISOString(),
-            fechaBaja: this.fechaBaja ? this.fechaBaja.toISOString() : null
-        };
-        
-        if (this.id) {
-            data.id = this.id;
-        }
-        
-        return data;
     }
 }
 

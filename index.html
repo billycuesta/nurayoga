@@ -84,10 +84,6 @@
                 <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
                     <h2 class="text-3xl font-bold text-gray-700">Gestión de Alumnos</h2>
                     <div class="flex items-center space-x-2">
-                        <input type="file" id="student-csv-import-input" accept=".csv" class="hidden">
-                        <button id="import-students-btn" class="btn-secondary font-bold py-2 px-4 rounded-lg shadow-sm">
-                            Importar Alumnos (CSV)
-                        </button>
                         <button id="open-new-student-modal" class="btn-brand font-bold py-2 px-4 rounded-lg shadow-sm">
                             + Nuevo Alumno
                         </button>
@@ -104,7 +100,10 @@
                                     <th class="p-4 font-semibold">Nombre</th>
                                     <th class="p-4 font-semibold">Email</th>
                                     <th class="p-4 font-semibold">Teléfono</th>
-                                    <th class="p-4 font-semibold">Fecha de Alta</th>  <th class="p-4 font-semibold">Estado</th>         <th class="p-4 font-semibold">Acciones</th>
+                                    <th class="p-4 font-semibold">Fecha de Alta</th>
+                                    <th class="p-4 font-semibold">Estado</th>
+                                    <th class="p-4 font-semibold">Pago Mes Actual</th>
+                                    <th class="p-4 font-semibold">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="students-table-body">
@@ -136,8 +135,16 @@
                         <h4 class="font-semibold text-gray-600">Limpieza de Curso</h4>
                         <p class="text-sm text-gray-500 mb-2">Borra TODAS las inscripciones de los alumnos a las clases, pero mantiene a los alumnos y la plantilla de clases fijas.</p>
                         <button id="clear-all-inscriptions-btn" class="btn-danger font-bold py-2 px-4 rounded-lg shadow-sm">
-                            Limpiar Todas las Inscripciones
+                            Limpiar todas las inscripciones
                         </button>
+                    </div>
+                    <div class="border-t border-red-200 pt-8">
+                        <h4 class="font-semibold text-red-700">Zona de Peligro</h4>
+                        <p class="text-sm text-gray-500 mb-2">Borra <strong class="text-red-600">TODOS</strong> los alumnos y <strong class="text-red-600">TODAS</strong> sus inscripciones de la aplicación. Esta acción no se puede deshacer.</p>
+                        <button id="delete-all-students-btn" class="btn-danger font-bold py-2 px-4 rounded-lg shadow-sm">
+                            Eliminar todos los alumnos
+                        </button>
+                    </div>
                     </div>
                 </div>
             </div>
