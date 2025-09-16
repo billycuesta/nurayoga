@@ -324,7 +324,6 @@ function setupEventListeners() {
         }
     }
 
-
 async function renderStudentsTable(filter = '') {
     const tbody = document.getElementById('students-table-body');
     tbody.innerHTML = '';
@@ -333,27 +332,21 @@ async function renderStudentsTable(filter = '') {
     const filteredStudents = filter ? students.filter(s => s.name.toLowerCase().includes(filter.toLowerCase()) || (s.email && s.email.toLowerCase().includes(filter.toLowerCase()))) : students;
     
     if (filteredStudents.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-gray-500">No se encontraron alumnos.</td></tr>';
+        // El colspan ahora es 3 porque tenemos 3 columnas
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center p-8 text-gray-500">No se encontraron alumnos.</td></tr>';
         return;
     }
 
     const currentMonthKey = `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`;
-    const currentMonthName = new Date().toLocaleDateString('es-ES', { month: 'long' });
-
+    
     filteredStudents.forEach(student => {
         const row = document.createElement('tr');
         row.className = 'border-b hover:bg-gray-50';
-        
-        const fechaAltaFormatted = student.fechaAlta ? new Date(student.fechaAlta).toLocaleDateString('es-ES') : '-';
-        const estado = student.fechaBaja 
-            ? `<span class="text-red-500 font-semibold">De baja (${new Date(student.fechaBaja).toLocaleDateString('es-ES')})</span>` 
-            : '<span class="text-green-600 font-semibold">Activo</span>';
         
         const paymentDate = student.getPaymentDateForMonth(currentMonthKey);
         let paymentStatusHTML = '';
 
         if (paymentDate) {
-            // Si hay fecha, está pagado. La formateamos.
             const formattedDate = new Date(paymentDate).toLocaleDateString('es-ES');
             paymentStatusHTML = `
                 <div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-green-200">
@@ -363,22 +356,17 @@ async function renderStudentsTable(filter = '') {
                 </div>
             `;
         } else {
-            // Si no hay fecha, no está pagado.
             paymentStatusHTML = `
                 <div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-red-200">
                     <span class="font-semibold text-red-500">
-                        No Pagado
+                        No pagado
                     </span>
                 </div>
             `;
         }
 
         row.innerHTML = `
-            <td class="p-4">${student.name}</td>
-            <td class="p-4">${student.email || '-'}</td>
-            <td class="p-4">${student.phone || '-'}</td>
-            <td class="p-4">${fechaAltaFormatted}</td>
-            <td class="p-4">${estado}</td>
+            <td class="p-4 font-medium text-gray-800">${student.name}</td>
             <td class="p-4" data-student-id="${student.id}">${paymentStatusHTML}</td>
             <td class="p-4 flex items-center space-x-4">
                 <button class="edit-student-btn text-blue-600 hover:text-blue-800 font-semibold">Editar</button>
@@ -394,6 +382,7 @@ async function renderStudentsTable(filter = '') {
         tbody.appendChild(row);
     });
 }
+
 
     async function renderTemplateEditor() {
         const templateDisplay = document.getElementById('template-display');
@@ -1190,49 +1179,62 @@ function setupModalFooterButtons() {
         });
     }
 
- async function showStudentDetails(studentId) {
-        const student = await Student.findById(studentId);
-        if (!student) {
-            console.error("No se encontró al alumno");
-            return;
-        }
-
-        const classes = await student.getActiveClasses();
-        
-        document.getElementById('student-details-name').textContent = student.name;
-        
-        const recurringList = document.getElementById('student-recurring-classes-list');
-        const oneOffList = document.getElementById('student-one-off-classes-list');
-        
-        recurringList.innerHTML = '';
-        oneOffList.innerHTML = '';
-
-        // Rellenar lista de clases fijas
-        if (classes.recurring.length > 0) {
-            classes.recurring.forEach(clase => {
-                const dayName = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'][clase.day - 1];
-                const item = DOMUtils.createElement('div', 'bg-gray-100 p-2 rounded');
-                item.innerHTML = `<p class="font-semibold">${clase.name}</p><p class="text-sm text-gray-600">${dayName} a las ${clase.time}</p>`;
-                recurringList.appendChild(item);
-            });
-        } else {
-            recurringList.innerHTML = '<p class="text-gray-500">No está inscrito/a en ninguna clase fija.</p>';
-        }
-
-        // Rellenar lista de clases puntuales
-        if (classes.oneOff.length > 0) {
-            classes.oneOff.forEach(clase => {
-                const dateFormatted = new Date(clase.date + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
-                const item = DOMUtils.createElement('div', 'bg-gray-100 p-2 rounded');
-                item.innerHTML = `<p class="font-semibold">${clase.name}</p><p class="text-sm text-gray-600">${dateFormatted} a las ${clase.time}</p>`;
-                oneOffList.appendChild(item);
-            });
-        } else {
-            oneOffList.innerHTML = '<p class="text-gray-500">No está inscrito/a en ninguna clase puntual.</p>';
-        }
-
-        studentDetailsModal.show();
+async function showStudentDetails(studentId) {
+    const student = await Student.findById(studentId);
+    if (!student) {
+        console.error("No se encontró al alumno");
+        return;
     }
+
+    const classes = await student.getActiveClasses();
+    
+    // Rellenar cabecera del modal
+    document.getElementById('student-details-name').textContent = student.name;
+    
+    // --- Rellenar Panel de Detalles Personales ---
+    document.getElementById('details-student-email').textContent = student.email || '-';
+    document.getElementById('details-student-phone').textContent = student.phone || '-';
+    document.getElementById('details-student-alta').textContent = new Date(student.fechaAlta).toLocaleDateString('es-ES');
+
+    const estadoElement = document.getElementById('details-student-estado');
+    if (student.fechaBaja) {
+        const fechaBajaFormatted = new Date(student.fechaBaja).toLocaleDateString('es-ES');
+        estadoElement.innerHTML = `<span class="font-semibold text-red-500">De baja (${fechaBajaFormatted})</span>`;
+    } else {
+        estadoElement.innerHTML = '<span class="font-semibold text-green-600">Activo</span>';
+    }
+
+    // --- Rellenar Listas de Clases ---
+    const recurringList = document.getElementById('student-recurring-classes-list');
+    const oneOffList = document.getElementById('student-one-off-classes-list');
+    
+    recurringList.innerHTML = '';
+    oneOffList.innerHTML = '';
+
+    if (classes.recurring.length > 0) {
+        classes.recurring.forEach(clase => {
+            const dayName = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'][clase.day - 1];
+            const item = DOMUtils.createElement('div', 'bg-gray-100 p-2 rounded');
+            item.innerHTML = `<p class="font-semibold">${clase.name}</p><p class="text-sm text-gray-600">${dayName} a las ${clase.time}</p>`;
+            recurringList.appendChild(item);
+        });
+    } else {
+        recurringList.innerHTML = '<p class="text-gray-500">No está inscrito/a en ninguna clase fija.</p>';
+    }
+
+    if (classes.oneOff.length > 0) {
+        classes.oneOff.forEach(clase => {
+            const dateFormatted = new Date(clase.date + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+            const item = DOMUtils.createElement('div', 'bg-gray-100 p-2 rounded');
+            item.innerHTML = `<p class="font-semibold">${clase.name}</p><p class="text-sm text-gray-600">${dateFormatted} a las ${clase.time}</p>`;
+            oneOffList.appendChild(item);
+        });
+    } else {
+        oneOffList.innerHTML = '<p class="text-gray-500">No está inscrito/a en ninguna clase puntual.</p>';
+    }
+
+    studentDetailsModal.show();
+}
 
 async function checkAndResetPayments() {
     const today = new Date();

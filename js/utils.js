@@ -416,63 +416,68 @@ const SearchUtils = {
 // === UTILIDADES DE NOTIFICACIÓN ===
 const NotificationUtils = {
     /**
-     * Muestra una notificación temporal
+     * Muestra una notificación temporal en la esquina inferior derecha.
      * @param {string} message 
      * @param {string} type - 'success', 'error', 'warning', 'info'
      * @param {number} duration - duración en ms
      */
     show(message, type = 'info', duration = 3000) {
-        // Crear elemento de notificación si no existe
+        // Crear el contenedor si no existe
         let container = document.getElementById('notifications-container');
         if (!container) {
-            container = DOMUtils.createElement('div', 'fixed top-4 right-4 z-50 space-y-2');
+            container = DOMUtils.createElement('div', 'fixed bottom-6 right-6 z-[100] flex flex-col items-end space-y-3');
             container.id = 'notifications-container';
             document.body.appendChild(container);
         }
 
-        const colorClasses = {
-            success: 'bg-green-500 text-white',
-            error: 'bg-red-500 text-white',
-            warning: 'bg-yellow-500 text-black',
-            info: 'bg-blue-500 text-white'
+        // Estilos e iconos por tipo
+        const styles = {
+            success: { icon: '✅', classes: 'bg-green-100 border-l-4 border-green-400 text-green-700' },
+            error: { icon: '❌', classes: 'bg-red-100 border-l-4 border-red-400 text-red-700' },
+            warning: { icon: '⚠️', classes: 'bg-yellow-100 border-l-4 border-yellow-400 text-yellow-700' },
+            info: { icon: 'ℹ️', classes: 'bg-blue-100 border-l-4 border-blue-400 text-blue-700' }
         };
+        const style = styles[type] || styles['info'];
 
-        const notification = DOMUtils.createElement('div', 
-            `${colorClasses[type]} px-4 py-2 rounded-lg shadow-lg transform transition-transform duration-300 translate-x-full`,
-            message
-        );
+        // Crear la notificación
+        const notification = DOMUtils.createElement('div');
+        notification.className = `min-w-[300px] flex items-center space-x-3 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-[calc(100%+24px)] opacity-0 ${style.classes}`;
+        notification.innerHTML = `
+            <span>${style.icon}</span>
+            <span class="font-semibold">${message}</span>
+        `;
 
         container.appendChild(notification);
 
         // Animar entrada
         setTimeout(() => {
-            notification.classList.remove('translate-x-full');
+            notification.classList.remove('translate-x-[calc(100%+24px)]', 'opacity-0');
         }, 10);
 
-        // Remover después del duration
+        // Animar salida y eliminar
         setTimeout(() => {
-            notification.classList.add('translate-x-full');
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 300);
+            notification.classList.add('opacity-0', 'translate-x-[calc(100%+24px)]');
+            notification.addEventListener('transitionend', () => {
+                notification.remove();
+            });
         }, duration);
     },
 
-    success(message, duration) {
+    success(message, duration = 3000) {
         this.show(message, 'success', duration);
     },
 
-    error(message, duration) {
+    error(message, duration = 5000) { // Los errores duran un poco más
         this.show(message, 'error', duration);
     },
 
-    warning(message, duration) {
+
+
+    warning(message, duration = 4000) {
         this.show(message, 'warning', duration);
     },
 
-    info(message, duration) {
+    info(message, duration = 3000) {
         this.show(message, 'info', duration);
     }
 };
