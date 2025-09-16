@@ -177,6 +177,17 @@ function setupEventListeners() {
     document.getElementById('nav-alumnos').addEventListener('click', () => switchView('alumnos'));
     document.getElementById('nav-configuracion').addEventListener('click', () => switchView('configuracion'));
 
+    // Navegación de semanas - CORREGIDO
+    document.getElementById('prev-week').addEventListener('click', () => {
+        currentDate.setDate(currentDate.getDate() - 7);
+        renderCalendar();
+    });
+    
+    document.getElementById('next-week').addEventListener('click', () => {
+        currentDate.setDate(currentDate.getDate() + 7);
+        renderCalendar();
+    });
+
     // Búsqueda de estudiantes
     document.getElementById('student-search-input').addEventListener('input', (e) => {
         renderStudentsTable(e.target.value);
