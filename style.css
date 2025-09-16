@@ -66,3 +66,16 @@ body {
     background: #a98c53;
 }
 
+/* --- NUEVOS ESTILOS PARA LA TABLA ORDENABLE --- */
+
+/* Transición suave para las filas de la tabla al reordenarse */
+#students-table-body tr {
+    transition: transform 0.3s ease-in-out;
+}
+
+/* Estilo para los indicadores de ordenación (flechas ▲ ▼) */
+.sortable-header .sort-indicator {
+    display: inline-block;
+    width: 1em; /* Reserva espacio para que el título no se mueva */
+    text-align: left;
+}

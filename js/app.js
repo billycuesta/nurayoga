@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Application State ---
     let currentDate = new Date();
+    let sortKey = 'name';
+    let sortDirection = 'asc';
     
     // --- UI Components ---
     let classModal, studentModal, templateModal, oneOffModal;
@@ -180,6 +182,26 @@ function setupEventListeners() {
         renderStudentsTable(e.target.value);
     });
 
+    // --- CÓDIGO NUEVO PARA ORDENACIÓN DE TABLA ---
+    document.querySelectorAll('.sortable-header').forEach(header => {
+        header.addEventListener('click', () => {
+            const newSortKey = header.dataset.sortKey;
+
+            if (sortKey === newSortKey) {
+                // Si se hace clic en la misma columna, se invierte la dirección
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                // Si se hace clic en una nueva columna, se ordena por esa y se resetea a 'asc'
+                sortKey = newSortKey;
+                sortDirection = 'asc';
+            }
+            
+            // Volvemos a renderizar la tabla con la nueva ordenación
+            renderStudentsTable(document.getElementById('student-search-input').value); 
+        });
+    });
+    // --- FIN DEL CÓDIGO NUEVO ---
+
     // Botones para abrir modales principales
     document.getElementById('open-new-student-modal').addEventListener('click', () => studentModal.show());
     document.getElementById('open-template-modal-btn').addEventListener('click', () => {
@@ -191,36 +213,25 @@ function setupEventListeners() {
         oneOffModal.show();
     });
 
-    // --- CÓDIGO AÑADIDO PARA GUARDAR NUEVO ALUMNO ---
+    // Guardar nuevo alumno
     studentForm.onSubmit(async (formData) => {
         try {
-            // 1. Mapea los datos del formulario a los que espera la clase Student
             const studentData = {
                 name: formData['new-student-name'],
                 email: formData['new-student-email'],
                 phone: formData['new-student-phone']
             };
-
-            // 2. Crea una nueva instancia de Student y la guarda
             const student = new Student(studentData);
             await student.save();
-
-            // 3. Muestra una notificación de éxito
             NotificationUtils.success('Alumno guardado correctamente');
-            
-            // 4. Cierra el modal y refresca la tabla para ver al nuevo alumno
             studentModal.hide();
             await renderStudentsTable();
             await renderStudentStats();
-
         } catch (error) {
-            // En caso de error (por validación o de la BD), muestra una notificación
             console.error('Error al guardar el alumno:', error);
             NotificationUtils.error(`Error al guardar: ${error.message}`);
         }
     });
-    // --- FIN DEL CÓDIGO AÑADIDO ---
-
 
     // Botones de la sección de Configuración
     document.getElementById('export-data-btn').addEventListener('click', handleExportData);
@@ -241,7 +252,8 @@ function setupEventListeners() {
         
         const paymentCell = target.closest('.payment-status-cell');
         if (paymentCell) {
-            const studentId = parseInt(paymentCell.parentElement.dataset.studentId);
+            // Buscamos el ID en el elemento padre 'tr' que lo tiene
+            const studentId = parseInt(paymentCell.closest('tr').dataset.studentId);
             if (studentId) {
                 handleTogglePayment(studentId);
             }
@@ -250,8 +262,9 @@ function setupEventListeners() {
         
         const studentRow = target.closest('.student-row-clickable');
         if (studentRow) {
-            const studentId = parseInt(studentRow.querySelector('[data-student-id]').dataset.studentId);
+            const studentId = parseInt(studentRow.dataset.studentId);
             if (studentId) {
+                // Nos aseguramos de no activar esto si se hace clic en un botón
                 if (!target.closest('button')) {
                     showStudentDetails(studentId);
                 }
@@ -357,63 +370,119 @@ function setupEventListeners() {
         }
     }
 
-async function renderStudentsTable(filter = '') {
-    const tbody = document.getElementById('students-table-body');
-    tbody.innerHTML = '';
-    
-    const students = await Student.findAll();
-    const filteredStudents = filter ? students.filter(s => s.name.toLowerCase().includes(filter.toLowerCase()) || (s.email && s.email.toLowerCase().includes(filter.toLowerCase()))) : students;
-    
-    if (filteredStudents.length === 0) {
-        // El colspan ahora es 3 porque tenemos 3 columnas
-        tbody.innerHTML = '<tr><td colspan="3" class="text-center p-8 text-gray-500">No se encontraron alumnos.</td></tr>';
-        return;
-    }
-
-    const currentMonthKey = `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`;
-    
-    filteredStudents.forEach(student => {
-        const row = document.createElement('tr');
-        row.className = 'border-b hover:bg-gray-50';
-        
-        const paymentDate = student.getPaymentDateForMonth(currentMonthKey);
-        let paymentStatusHTML = '';
-
-        if (paymentDate) {
-            const formattedDate = new Date(paymentDate).toLocaleDateString('es-ES');
-            paymentStatusHTML = `
-                <div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-green-200">
-                    <span class="font-semibold text-green-600">
-                        Pagado el ${formattedDate}
-                    </span>
-                </div>
-            `;
+function updateSortIndicators() {
+    document.querySelectorAll('.sortable-header').forEach(header => {
+        const indicator = header.querySelector('.sort-indicator');
+        if (header.dataset.sortKey === sortKey) {
+            indicator.textContent = sortDirection === 'asc' ? ' ▲' : ' ▼';
         } else {
-            paymentStatusHTML = `
-                <div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-red-200">
-                    <span class="font-semibold text-red-500">
-                        No pagado
-                    </span>
-                </div>
-            `;
+            indicator.textContent = '';
+        }
+    });
+}
+
+
+async function renderStudentsTable(filter = '') {
+    updateSortIndicators();
+
+    const tbody = document.getElementById('students-table-body');
+    const students = await Student.findAll();
+    const currentMonthKey = `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`;
+
+    const rowsMap = new Map();
+    tbody.querySelectorAll('tr[data-student-id]').forEach(row => {
+        rowsMap.set(row.dataset.studentId, row);
+    });
+
+    const visibleStudentIds = new Set();
+
+    students.forEach(student => {
+        const studentIdStr = student.id.toString();
+        const matchesFilter = !filter || student.name.toLowerCase().includes(filter.toLowerCase()) || (student.email && student.email.toLowerCase().includes(filter.toLowerCase()));
+
+        if (matchesFilter) {
+            visibleStudentIds.add(student.id);
         }
 
-        row.innerHTML = `
-            <td class="p-4 font-medium text-gray-800">${student.name}</td>
-            <td class="p-4" data-student-id="${student.id}">${paymentStatusHTML}</td>
-            <td class="p-4 flex items-center space-x-4">
-                <button class="edit-student-btn text-blue-600 hover:text-blue-800 font-semibold">Editar</button>
-                <button class="delete-student-btn text-red-500 hover:text-red-700 font-semibold">Eliminar</button>
-            </td>
-        `;
-        
-        row.querySelector('.edit-student-btn').addEventListener('click', () => handleEditStudent(student.id));
-        row.querySelector('.delete-student-btn').addEventListener('click', () => handleDeleteStudent(student.id));
-        
-        row.classList.add('student-row-clickable');
-        
-        tbody.appendChild(row);
+        let row = rowsMap.get(studentIdStr);
+
+        // Generamos el HTML del estado de pago SIEMPRE, para crearlo o actualizarlo
+        const paymentDate = student.getPaymentDateForMonth(currentMonthKey);
+        let paymentStatusHTML = '';
+        if (paymentDate) {
+            const formattedDate = new Date(paymentDate).toLocaleDateString('es-ES');
+            paymentStatusHTML = `<div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-green-200"><span class="font-semibold text-green-600">Pagado el ${formattedDate}</span></div>`;
+        } else {
+            paymentStatusHTML = `<div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-red-200"><span class="font-semibold text-red-500">No pagado</span></div>`;
+        }
+
+        if (!row) {
+            // Si la fila no existe, la creamos
+            row = document.createElement('tr');
+            row.dataset.studentId = studentIdStr;
+            row.className = 'border-b hover:bg-gray-50';
+            
+            row.innerHTML = `
+                <td class="p-4 font-medium text-gray-800">${student.name}</td>
+                <td class="p-4 payment-status-container">${paymentStatusHTML}</td>
+                <td class="p-4 flex items-center space-x-4">
+                    <button class="edit-student-btn text-blue-600 hover:text-blue-800 font-semibold">Editar</button>
+                    <button class="delete-student-btn text-red-500 hover:text-red-700 font-semibold">Eliminar</button>
+                </td>
+            `;
+            
+            row.querySelector('.edit-student-btn').addEventListener('click', () => handleEditStudent(student.id));
+            row.querySelector('.delete-student-btn').addEventListener('click', () => handleDeleteStudent(student.id));
+            row.classList.add('student-row-clickable');
+            
+            tbody.appendChild(row);
+        } else {
+            // --- INICIO DE LA CORRECCIÓN ---
+            // Si la fila YA EXISTE, solo actualizamos la celda de pago
+            const paymentCell = row.querySelector('.payment-status-container');
+            if (paymentCell) {
+                paymentCell.innerHTML = paymentStatusHTML;
+            }
+            // --- FIN DE LA CORRECCIÓN ---
+        }
+
+        row.style.display = matchesFilter ? '' : 'none';
     });
+    
+    // El resto de la función (ordenación y reordenado del DOM) permanece igual
+    const sortedVisibleStudents = students
+        .filter(s => visibleStudentIds.has(s.id))
+        .sort((a, b) => {
+            let valA, valB;
+            switch (sortKey) {
+                case 'name': valA = a.name.toLowerCase(); valB = b.name.toLowerCase(); break;
+                case 'payment': valA = a.getPaymentDateForMonth(currentMonthKey) ? 1 : 0; valB = b.getPaymentDateForMonth(currentMonthKey) ? 1 : 0; break;
+                default: return 0;
+            }
+            if (valA < valB) return -1;
+            if (valA > valB) return 1;
+            return a.name.localeCompare(b.name);
+        });
+
+    if (sortDirection === 'desc') {
+        sortedVisibleStudents.reverse();
+    }
+
+    sortedVisibleStudents.forEach(student => {
+        const row = tbody.querySelector(`tr[data-student-id='${student.id}']`);
+        if (row) {
+            tbody.appendChild(row);
+        }
+    });
+
+    const noResultsRow = tbody.querySelector('.no-results-row');
+    if (sortedVisibleStudents.length === 0 && filter) {
+        if (!noResultsRow) {
+            tbody.insertAdjacentHTML('beforeend', '<tr class="no-results-row"><td colspan="3" class="text-center p-8 text-gray-500">No se encontraron alumnos.</td></tr>');
+        }
+    } else if (noResultsRow) {
+        noResultsRow.remove();
+    }
 }
 
 

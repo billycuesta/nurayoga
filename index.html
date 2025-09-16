@@ -154,8 +154,12 @@
                     <table class="w-full text-left">
                         <thead class="sticky top-0 bg-gray-50">
                             <tr>
-                                <th class="p-4 font-semibold">Nombre</th>
-                                <th class="p-4 font-semibold">Pago mes actual</th>
+                                <th class="p-4 font-semibold sortable-header" data-sort-key="name" style="cursor: pointer;">
+                                    Nombre <span class="sort-indicator"></span>
+                                </th>
+                                <th class="p-4 font-semibold sortable-header" data-sort-key="payment" style="cursor: pointer;">
+                                    Pago mes actual <span class="sort-indicator"></span>
+                                </th>
                                 <th class="p-4 font-semibold">Acciones</th>
                             </tr>
                         </thead>
