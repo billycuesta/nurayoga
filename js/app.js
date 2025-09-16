@@ -87,6 +87,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         setupStudentsTable();
+        populateTimeSelects();
     }
 
     function setupStudentsTable() {
@@ -167,6 +168,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+
 function setupEventListeners() {
     // Navegación
     document.getElementById('nav-horario').addEventListener('click', () => switchView('horario'));
@@ -188,6 +190,37 @@ function setupEventListeners() {
         resetOneOffForm();
         oneOffModal.show();
     });
+
+    // --- CÓDIGO AÑADIDO PARA GUARDAR NUEVO ALUMNO ---
+    studentForm.onSubmit(async (formData) => {
+        try {
+            // 1. Mapea los datos del formulario a los que espera la clase Student
+            const studentData = {
+                name: formData['new-student-name'],
+                email: formData['new-student-email'],
+                phone: formData['new-student-phone']
+            };
+
+            // 2. Crea una nueva instancia de Student y la guarda
+            const student = new Student(studentData);
+            await student.save();
+
+            // 3. Muestra una notificación de éxito
+            NotificationUtils.success('Alumno guardado correctamente');
+            
+            // 4. Cierra el modal y refresca la tabla para ver al nuevo alumno
+            studentModal.hide();
+            await renderStudentsTable();
+            await renderStudentStats();
+
+        } catch (error) {
+            // En caso de error (por validación o de la BD), muestra una notificación
+            console.error('Error al guardar el alumno:', error);
+            NotificationUtils.error(`Error al guardar: ${error.message}`);
+        }
+    });
+    // --- FIN DEL CÓDIGO AÑADIDO ---
+
 
     // Botones de la sección de Configuración
     document.getElementById('export-data-btn').addEventListener('click', handleExportData);
@@ -434,91 +467,98 @@ async function renderStudentsTable(filter = '') {
         }
     }
 
-    async function openClassModal(classData, date) {
-        const modal = document.getElementById('class-modal');
-        modal.dataset.classId = classData.id;
-        modal.dataset.classType = classData.type;
-        modal.dataset.date = date; // Mantener la fecha por si acaso
 
-        // --- Pestañas ---
-        const tabAttendees = document.getElementById('tab-attendees');
-        const tabDetails = document.getElementById('tab-details');
-        const panelAttendees = document.getElementById('panel-attendees');
-        const panelDetails = document.getElementById('panel-details');
+// app.js -> Reemplaza tu función openClassModal actual por esta versión completa
 
-        // Resetear al estado inicial (Asistentes visible)
+async function openClassModal(classData, date) {
+    const modal = document.getElementById('class-modal');
+    modal.dataset.classId = classData.id;
+    modal.dataset.classType = classData.type;
+    modal.dataset.date = date; // Mantener la fecha por si acaso
+
+    // --- Pestañas ---
+    const tabAttendees = document.getElementById('tab-attendees');
+    const tabDetails = document.getElementById('tab-details');
+    const panelAttendees = document.getElementById('panel-attendees');
+    const panelDetails = document.getElementById('panel-details');
+
+    // Resetear al estado inicial (Asistentes visible)
+    panelAttendees.classList.remove('hidden');
+    panelDetails.classList.add('hidden');
+    tabAttendees.classList.add('border-brand', 'text-brand');
+    tabAttendees.classList.remove('border-transparent', 'text-gray-500');
+    tabDetails.classList.add('border-transparent', 'text-gray-500');
+    tabDetails.classList.remove('border-brand', 'text-brand');
+
+    // Lógica de cambio de pestañas
+    tabAttendees.onclick = () => {
         panelAttendees.classList.remove('hidden');
         panelDetails.classList.add('hidden');
         tabAttendees.classList.add('border-brand', 'text-brand');
-        tabAttendees.classList.remove('border-transparent', 'text-gray-500');
-        tabDetails.classList.add('border-transparent', 'text-gray-500');
         tabDetails.classList.remove('border-brand', 'text-brand');
-
-        // Lógica de cambio de pestañas
-        tabAttendees.onclick = () => {
-            panelAttendees.classList.remove('hidden');
-            panelDetails.classList.add('hidden');
-            tabAttendees.classList.add('border-brand', 'text-brand');
-            tabDetails.classList.remove('border-brand', 'text-brand');
-        };
-        tabDetails.onclick = () => {
-            panelAttendees.classList.add('hidden');
-            panelDetails.classList.remove('hidden');
-            tabDetails.classList.add('border-brand', 'text-brand');
-            tabAttendees.classList.remove('border-brand', 'text-brand');
-        };
-        
-        // --- Rellenar Cabecera ---
-        document.getElementById('modal-class-name').textContent = classData.name;
-        document.getElementById('modal-class-teacher').textContent = classData.teacher || '';
-        document.getElementById('modal-class-teacher').style.color = ColorUtils.getColorFromString(classData.teacher);
-        if (classData.type === 'recurring') {
-            const dayName = DateUtils.getDayName(new Date(date).getDay());
-            document.getElementById('modal-class-time').textContent = `${dayName}, ${classData.time} (Fija)`;
-        } else {
-            const formattedDate = DateUtils.formatDisplayDate(date);
-            document.getElementById('modal-class-time').textContent = `${formattedDate} - ${classData.time}`;
-        }
-
-        // --- Rellenar Panel de Asistentes ---
-        await renderAttendeesList();
-        await populateStudentSelect();
-
-        // --- Rellenar Panel de Editar Detalles ---
-        const form = document.getElementById('edit-class-form');
-        const dateContainer = document.getElementById('edit-date-container');
-        const dayContainer = document.getElementById('edit-day-container');
-
-        // Mostrar/ocultar campo de día o fecha según el tipo de clase
-        dateContainer.style.display = classData.type === 'one-off' ? 'block' : 'none';
-        dayContainer.style.display = classData.type === 'recurring' ? 'block' : 'none';
-
-        // Rellenar campos comunes
-        form.elements['name'].value = classData.name;
-        form.elements['capacity'].value = classData.capacity;
-        
-        // Rellenar selects de hora/minutos
-        if (classData.time) {
-            const [hour, minute] = classData.time.split(':');
-            document.getElementById('edit-time-hour').value = hour;
-            document.getElementById('edit-time-minute').value = minute;
-        }
-        
-        // Rellenar select de día o campo de fecha
-        if (classData.type === 'recurring') {
-            form.elements['day'].value = classData.day;
-        } else {
-            form.elements['date'].value = classData.date;
-        }
-
-        // Rellenar select de profesores
-        await populateTeacherSelects(classData.teacher, 'edit-teacher-select');
-        
-        // Configurar botones del footer
-        setupModalFooterButtons();
-
-        classModal.show();
+    };
+    tabDetails.onclick = () => {
+        panelAttendees.classList.add('hidden');
+        panelDetails.classList.remove('hidden');
+        tabDetails.classList.add('border-brand', 'text-brand');
+        tabAttendees.classList.remove('border-brand', 'text-brand');
+    };
+    
+    // --- Rellenar Cabecera ---
+    document.getElementById('modal-class-name').textContent = classData.name;
+    document.getElementById('modal-class-teacher').textContent = classData.teacher || '';
+    document.getElementById('modal-class-teacher').style.color = ColorUtils.getColorFromString(classData.teacher);
+    if (classData.type === 'recurring') {
+        const dayName = DateUtils.getDayName(new Date(date).getDay());
+        document.getElementById('modal-class-time').textContent = `${dayName}, ${classData.time} (Fija)`;
+    } else {
+        const formattedDate = DateUtils.formatDisplayDate(date);
+        document.getElementById('modal-class-time').textContent = `${formattedDate} - ${classData.time}`;
     }
+
+    // --- Rellenar Panel de Asistentes ---
+    await renderAttendeesList();
+    await populateStudentSelect();
+
+    // --- Rellenar Panel de Editar Detalles ---
+    const form = document.getElementById('edit-class-form');
+    const dateContainer = document.getElementById('edit-date-container');
+    const dayContainer = document.getElementById('edit-day-container');
+
+    // Mostrar/ocultar campo de día o fecha según el tipo de clase
+    dateContainer.style.display = classData.type === 'one-off' ? 'block' : 'none';
+    dayContainer.style.display = classData.type === 'recurring' ? 'block' : 'none';
+
+    // Rellenar campos comunes
+    form.elements['name'].value = classData.name;
+    form.elements['capacity'].value = classData.capacity;
+    
+    // Rellenar selects de hora/minutos (con la lógica corregida)
+    if (classData.time && classData.time.includes(':')) {
+        const [hour, minute] = classData.time.split(':');
+        document.getElementById('edit-time-hour').value = hour;
+        document.getElementById('edit-time-minute').value = minute;
+    } else {
+        // Si no hay hora, dejamos los campos vacíos para que el usuario los rellene.
+        document.getElementById('edit-time-hour').value = '';
+        document.getElementById('edit-time-minute').value = '';
+    }
+    
+    // Rellenar select de día o campo de fecha
+    if (classData.type === 'recurring') {
+        form.elements['day'].value = classData.day;
+    } else {
+        form.elements['date'].value = classData.date;
+    }
+
+    // Rellenar select de profesores
+    await populateTeacherSelects(classData.teacher, 'edit-teacher-select');
+    
+    // Configurar botones del footer
+    setupModalFooterButtons();
+
+    classModal.show();
+}
 
     async function renderAttendeesList() {
         const attendeesList = document.getElementById('attendees-list');
@@ -1115,8 +1155,11 @@ async function renderStudentStats() {
     document.getElementById('stat-attending-multiple-classes').textContent = attendingMultiple;
 }
 
-    // AÑADE ESTA NUEVA FUNCIÓN
+// app.js -> Reemplaza la función entera con esta versión final
+
 async function handleSaveChangesFromClassModal() {
+    console.log(`[${new Date().toLocaleTimeString()}] Se inicia el guardado de cambios.`);
+
     const modal = document.getElementById('class-modal');
     const classId = parseInt(modal.dataset.classId);
     const classType = modal.dataset.classType;
@@ -1125,12 +1168,23 @@ async function handleSaveChangesFromClassModal() {
         const form = document.getElementById('edit-class-form');
         const hour = document.getElementById('edit-time-hour').value;
         const minute = document.getElementById('edit-time-minute').value;
-        
+
+        // --- INICIO DE LA NUEVA VERIFICACIÓN ---
+        // Si la hora o los minutos están vacíos, no continuamos.
+        if (!hour || !minute) {
+            NotificationUtils.error('Por favor, selecciona una hora y minutos válidos.');
+            console.error('VALIDACIÓN FALLIDA: La hora o los minutos están vacíos.', { hour, minute });
+            return; // Detiene la ejecución aquí mismo.
+        }
+        // --- FIN DE LA NUEVA VERIFICACIÓN ---
+
+        const combinedTime = `${hour}:${minute}`;
+
         const classDetails = {
             name: form.elements['name'].value,
             teacher: form.elements['teacher'].value,
             capacity: parseInt(form.elements['capacity'].value),
-            time: `${hour}:${minute}`
+            time: combinedTime
         };
 
         let classInstance;
@@ -1145,39 +1199,39 @@ async function handleSaveChangesFromClassModal() {
         if (classInstance) {
             Object.assign(classInstance, classDetails);
             await classInstance.save();
+            
+            console.log('ÉXITO: La clase se ha guardado correctamente en la BD.');
             NotificationUtils.success('Clase actualizada correctamente');
+            
             classModal.hide();
             await renderCalendar();
         }
     } catch (error) {
-        console.error('Error guardando cambios de la clase:', error);
+        console.error('ERROR CAPTURADO: Ha fallado el guardado.', error);
         NotificationUtils.error('Error al guardar: ' + error.message);
     }
 }
 
 function setupModalFooterButtons() {
-        const modal = document.getElementById('class-modal');
-        const classId = parseInt(modal.dataset.classId);
-        const classType = modal.dataset.classType;
+    const modal = document.getElementById('class-modal');
+    const classId = parseInt(modal.dataset.classId);
+    const classType = modal.dataset.classType;
 
-        // Botón Guardar (reemplazamos listener para evitar duplicados)
-        const saveBtn = document.getElementById('save-class-changes-btn');
-        const newSaveBtn = saveBtn.cloneNode(true);
-        saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
-        newSaveBtn.addEventListener('click', handleSaveChangesFromClassModal);
+    const saveBtn = document.getElementById('save-class-changes-btn');
+    const deleteBtn = document.getElementById('delete-class-btn');
 
-        // Botón Eliminar (reemplazamos listener)
-        const deleteBtn = document.getElementById('delete-class-btn');
-        const newDeleteBtn = deleteBtn.cloneNode(true);
-        deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
-        newDeleteBtn.addEventListener('click', () => {
-            if (classType === 'recurring') {
-                handleDeleteTemplate(classId);
-            } else {
-                handleDeleteOneOffClass(classId);
-            }
-        });
-    }
+    // Asignamos la función directamente al evento 'onclick'.
+    // Esto garantiza que siempre habrá un único listener, reemplazando cualquier anterior.
+    saveBtn.onclick = () => handleSaveChangesFromClassModal();
+
+    deleteBtn.onclick = () => {
+        if (classType === 'recurring') {
+            handleDeleteTemplate(classId);
+        } else {
+            handleDeleteOneOffClass(classId);
+        }
+    };
+}
 
 async function showStudentDetails(studentId) {
     const student = await Student.findById(studentId);
