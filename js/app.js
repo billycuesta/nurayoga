@@ -224,17 +224,6 @@ function setupEventListeners() {
         oneOffModal.show();
     });
 
-    document.querySelectorAll('.mobile-nav-btn').forEach(button => {
-        button.addEventListener('click', () => {
-            const viewName = button.dataset.view;
-            switchView(viewName);
-
-            // Actualizar el estado activo
-            document.querySelectorAll('.mobile-nav-btn').forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
-        });
-    });
-
     // --- MANEJADORES DE GUARDADO DE FORMULARIOS ---
 
     // Guardar nuevo alumno
