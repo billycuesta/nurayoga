@@ -451,11 +451,17 @@ function updateSortIndicators() {
     });
 }
 
-async function renderStudentsTable(filter = '') {
+
+async function renderStudentsTable(filter = '', students = null) {
     updateSortIndicators();
 
     const tbody = document.getElementById('students-table-body');
-    const students = await Student.findAll();
+    tbody.innerHTML = '';
+    // Si no nos pasan la lista de alumnos, la buscamos
+    if (students === null) {
+        students = await Student.findAll();
+    }
+
     const currentMonthKey = `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`;
 
     const rowsMap = new Map();
@@ -478,7 +484,6 @@ async function renderStudentsTable(filter = '') {
         const paymentDate = student.getPaymentDateForMonth(currentMonthKey);
         let paymentStatusHTML = '';
         if (paymentDate) {
-            // --- MODIFICACIÓN AQUÍ: Se ha eliminado la fecha detallada ---
             paymentStatusHTML = `<div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-green-200"><span class="font-semibold text-green-600">Pagado</span></div>`;
         } else {
             paymentStatusHTML = `<div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-red-200"><span class="font-semibold text-red-500">No pagado</span></div>`;
@@ -504,10 +509,10 @@ async function renderStudentsTable(filter = '') {
             
             tbody.appendChild(row);
         } else {
-            const paymentCell = row.querySelector('.payment-status-container');
-            if (paymentCell) {
-                paymentCell.innerHTML = paymentStatusHTML;
-            }
+            // CÓDIGO CORREGIDO: Actualizamos el contenido de las celdas existentes
+            row.cells[0].textContent = student.name;
+            row.cells[1].innerHTML = paymentStatusHTML;
+            // Si tuvieras más celdas, las actualizarías aquí también.
         }
 
         row.style.display = matchesFilter ? '' : 'none';
@@ -547,6 +552,7 @@ async function renderStudentsTable(filter = '') {
         noResultsRow.remove();
     }
 }
+
 
 
     async function renderTemplateEditor() {
@@ -932,9 +938,11 @@ async function handleDeleteAllStudents() {
                 await window.db.clearAllStudentsAndRelatedData();
                 NotificationUtils.success('Todos los alumnos y sus inscripciones han sido eliminados.');
                 
-                // Refrescar las vistas para mostrar que están vacías
-                await renderStudentsTable();
-                await renderCalendar();
+                // --- MODIFICACIÓN CLAVE AQUÍ ---
+                // En lugar de refrescar vistas ocultas, te llevamos directamente a la vista de alumnos.
+                // Esto hará que el cambio sea visible al instante.
+                await switchView('alumnos');
+
             } catch (error) {
                 console.error("Error al eliminar todos los alumnos:", error);
                 NotificationUtils.error('Hubo un error durante la eliminación.');
@@ -1213,22 +1221,19 @@ async function handleDeleteAllStudents() {
         populateTeacherSelects();
     }
 
-    async function switchView(viewName) {
+async function switchView(viewName) {
     const isHorario = viewName === 'horario';
     const isAlumnos = viewName === 'alumnos';
     const isConfiguracion = viewName === 'configuracion';
     
-    // Ocultar todas las vistas
     document.getElementById('view-horario').classList.add('hidden');
     document.getElementById('view-alumnos').classList.add('hidden');
     document.getElementById('view-configuracion').classList.add('hidden');
     
-    // Actualizar estilo de todos los botones de navegación
     document.getElementById('nav-horario').classList.replace('border-white', 'border-transparent');
     document.getElementById('nav-alumnos').classList.replace('border-white', 'border-transparent');
     document.getElementById('nav-configuracion').classList.replace('border-white', 'border-transparent');
 
-    // Mostrar la vista y activar el botón seleccionado
     if (isHorario) {
         document.getElementById('view-horario').classList.remove('hidden');
         document.getElementById('nav-horario').classList.replace('border-transparent', 'border-white');
@@ -1236,32 +1241,36 @@ async function handleDeleteAllStudents() {
     } else if (isAlumnos) {
         document.getElementById('view-alumnos').classList.remove('hidden');
         document.getElementById('nav-alumnos').classList.replace('border-transparent', 'border-white');
-        // Llamamos a las dos funciones al entrar en la vista de alumnos
-        await renderStudentStats();
-        await renderStudentsTable();
+        
+        // --- MODIFICACIÓN CLAVE ---
+        // Obtenemos los datos una sola vez y los pasamos a ambas funciones
+        // para garantizar que estén sincronizadas.
+        const students = await Student.findAll();
+        await renderStudentStats(students);
+        await renderStudentsTable('', students);
+        
     } else if (isConfiguracion) {
         document.getElementById('view-configuracion').classList.remove('hidden');
         document.getElementById('nav-configuracion').classList.replace('border-transparent', 'border-white');
     }
-    }
+}
 
-async function renderStudentStats() {
-    // Primero, mostramos un estado de carga
+async function renderStudentStats(students = null) {
     document.getElementById('stat-total-students').textContent = '-';
     document.getElementById('stat-paid-students').textContent = '-';
     document.getElementById('stat-attending-one-class').textContent = '-';
     document.getElementById('stat-attending-multiple-classes').textContent = '-';
 
-    const students = await Student.findAll();
+    // Si no nos pasan la lista de alumnos, la buscamos (mantiene la compatibilidad)
+    if (students === null) {
+        students = await Student.findAll();
+    }
     
-    // 1. Total de Alumnos
     const totalStudents = students.length;
 
-    // 2. Alumnos que han pagado este mes
     const currentMonthKey = `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`;
     const paidStudents = students.filter(s => s.getPaymentDateForMonth(currentMonthKey)).length;
 
-    // 3. y 4. Alumnos que asisten a clases
     const [inscriptions, recurringInscriptions] = await Promise.all([
         window.db.getAllInscriptions(),
         window.db.getAllRecurringInscriptions()
@@ -1280,12 +1289,15 @@ async function renderStudentStats() {
     const attendingOneOrMore = Object.keys(inscriptionCounts).length;
     const attendingMultiple = Object.values(inscriptionCounts).filter(count => count > 1).length;
 
-    // Actualizamos la interfaz con los valores calculados
     document.getElementById('stat-total-students').textContent = totalStudents;
     document.getElementById('stat-paid-students').textContent = paidStudents;
     document.getElementById('stat-attending-one-class').textContent = attendingOneOrMore;
     document.getElementById('stat-attending-multiple-classes').textContent = attendingMultiple;
 }
+
+
+
+
 
 // app.js -> Reemplaza la función entera con esta versión final
 
