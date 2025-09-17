@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupEditStudentModal();
         setupEventListeners();
 
+        await populateTeacherFilter();
         // Cargar vista inicial
         await switchView('horario');
 
@@ -186,6 +187,10 @@ function setupEventListeners() {
     
     document.getElementById('next-week').addEventListener('click', () => {
         currentDate.setDate(currentDate.getDate() + 7);
+        renderCalendar();
+    });
+
+    document.getElementById('teacher-filter-select').addEventListener('change', () => {
         renderCalendar();
     });
 
@@ -442,16 +447,18 @@ templateForm.onSubmit(async (formData) => {
     }
 
     // --- Rendering Functions ---
+
     async function renderCalendar() {
         const calendarGrid = document.getElementById('calendar-grid');
         calendarGrid.innerHTML = '';
         
+        // 1. LEER EL VALOR DEL FILTRO
+        const selectedTeacher = document.getElementById('teacher-filter-select').value;
+
         const startOfWeek = DateUtils.getStartOfWeek(currentDate);
         currentWeekDisplay.textContent = `Semana del ${startOfWeek.toLocaleDateString('es-ES', {day: 'numeric', month: 'long'})}`;
-
         const weekDays = DateUtils.getWeekdayNames();
         
-        // Obtener datos
         const [recurringClasses, oneOffClasses, inscriptions, recurringInscriptions] = await Promise.all([
             RecurringClass.findAll(),
             OneOffClass.findAll(),
@@ -471,14 +478,18 @@ templateForm.onSubmit(async (formData) => {
             );
             dayColumn.appendChild(dayHeader);
             
-            // Filtrar clases del día
             const dayRecurringClasses = recurringClasses.filter(c => c.day === i + 1);
             const dayOneOffClasses = oneOffClasses.filter(c => c.date === dayDateString);
             
-            const allClasses = [
+            let allClasses = [ // Usamos 'let' en lugar de 'const' para poder reasignarla
                 ...dayRecurringClasses.map(c => ({ ...c, type: 'recurring' })),
                 ...dayOneOffClasses.map(c => ({ ...c, type: 'one-off' }))
             ].sort((a, b) => a.time.localeCompare(b.time));
+
+            // 2. APLICAR EL FILTRO
+            if (selectedTeacher !== 'all') {
+                allClasses = allClasses.filter(classData => classData.teacher === selectedTeacher);
+            }
 
             const classesContainer = DOMUtils.createElement('div', 'space-y-4');
             
@@ -495,7 +506,6 @@ templateForm.onSubmit(async (formData) => {
                     const isFull = currentInscriptions >= classData.capacity;
                     const card = Card.createClassCard(classData, currentInscriptions, isFull);
                     
-                    // Añadir data attributes
                     card.dataset.id = classData.id;
                     card.dataset.type = classData.type;
                     card.dataset.date = dayDateString;
@@ -510,147 +520,147 @@ templateForm.onSubmit(async (formData) => {
         }
     }
 
-function updateSortIndicators() {
-    document.querySelectorAll('.sortable-header').forEach(header => {
-        const indicator = header.querySelector('.sort-indicator');
-        if (header.dataset.sortKey === sortKey) {
-            indicator.textContent = sortDirection === 'asc' ? ' ▲' : ' ▼';
-        } else {
-            indicator.textContent = '';
-        }
-    });
-}
-
-
-async function renderStudentsTable(filter = '', students = null) {
-    updateSortIndicators();
-
-    const tbody = document.getElementById('students-table-body');
-    tbody.innerHTML = '';
-    // Si no nos pasan la lista de alumnos, la buscamos
-    if (students === null) {
-        students = await Student.findAll();
+    function updateSortIndicators() {
+        document.querySelectorAll('.sortable-header').forEach(header => {
+            const indicator = header.querySelector('.sort-indicator');
+            if (header.dataset.sortKey === sortKey) {
+                indicator.textContent = sortDirection === 'asc' ? ' ▲' : ' ▼';
+            } else {
+                indicator.textContent = '';
+            }
+        });
     }
 
-    const currentMonthKey = `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`;
 
-    const rowsMap = new Map();
-    tbody.querySelectorAll('tr[data-student-id]').forEach(row => {
-        rowsMap.set(row.dataset.studentId, row);
-    });
+    async function renderStudentsTable(filter = '', students = null) {
+        updateSortIndicators();
 
-    const visibleStudentIds = new Set();
-
-    students.forEach(student => {
-        const studentIdStr = student.id.toString();
-        const matchesFilter = !filter || student.name.toLowerCase().includes(filter.toLowerCase()) || (student.email && student.email.toLowerCase().includes(filter.toLowerCase()));
-
-        if (matchesFilter) {
-            visibleStudentIds.add(student.id);
+        const tbody = document.getElementById('students-table-body');
+        tbody.innerHTML = '';
+        // Si no nos pasan la lista de alumnos, la buscamos
+        if (students === null) {
+            students = await Student.findAll();
         }
 
-        let row = rowsMap.get(studentIdStr);
+        const currentMonthKey = `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`;
 
+        const rowsMap = new Map();
+        tbody.querySelectorAll('tr[data-student-id]').forEach(row => {
+            rowsMap.set(row.dataset.studentId, row);
+        });
+
+        const visibleStudentIds = new Set();
+
+        students.forEach(student => {
+            const studentIdStr = student.id.toString();
+            const matchesFilter = !filter || student.name.toLowerCase().includes(filter.toLowerCase()) || (student.email && student.email.toLowerCase().includes(filter.toLowerCase()));
+
+            if (matchesFilter) {
+                visibleStudentIds.add(student.id);
+            }
+
+            let row = rowsMap.get(studentIdStr);
+
+            const paymentDate = student.getPaymentDateForMonth(currentMonthKey);
+            let paymentStatusHTML = '';
+            if (paymentDate) {
+                paymentStatusHTML = `<div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-green-200"><span class="font-semibold text-green-600">Pagado</span></div>`;
+            } else {
+                paymentStatusHTML = `<div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-red-200"><span class="font-semibold text-red-500">No pagado</span></div>`;
+            }
+
+            if (!row) {
+                row = document.createElement('tr');
+                row.dataset.studentId = studentIdStr;
+                row.className = 'border-b hover:bg-gray-50';
+                
+                row.innerHTML = `
+                    <td class="p-4 font-medium text-gray-800">${student.name}</td>
+                    <td class="p-4 payment-status-container">${paymentStatusHTML}</td>
+                    <td class="p-4 flex items-center space-x-4">
+                        <button class="edit-student-btn text-blue-600 hover:text-blue-800 font-semibold">Editar</button>
+                        <button class="delete-student-btn text-red-500 hover:text-red-700 font-semibold">Eliminar</button>
+                    </td>
+                `;
+                
+                row.querySelector('.edit-student-btn').addEventListener('click', () => handleEditStudent(student.id));
+                row.querySelector('.delete-student-btn').addEventListener('click', () => handleDeleteStudent(student.id));
+                row.classList.add('student-row-clickable');
+                
+                tbody.appendChild(row);
+            } else {
+                // CÓDIGO CORREGIDO: Actualizamos el contenido de las celdas existentes
+                row.cells[0].textContent = student.name;
+                row.cells[1].innerHTML = paymentStatusHTML;
+                // Si tuvieras más celdas, las actualizarías aquí también.
+            }
+
+            row.style.display = matchesFilter ? '' : 'none';
+        });
+        
+        const sortedVisibleStudents = students
+            .filter(s => visibleStudentIds.has(s.id))
+            .sort((a, b) => {
+                let valA, valB;
+                switch (sortKey) {
+                    case 'name': valA = a.name.toLowerCase(); valB = b.name.toLowerCase(); break;
+                    case 'payment': valA = a.getPaymentDateForMonth(currentMonthKey) ? 1 : 0; valB = b.getPaymentDateForMonth(currentMonthKey) ? 1 : 0; break;
+                    default: return 0;
+                }
+                if (valA < valB) return -1;
+                if (valA > valB) return 1;
+                return a.name.localeCompare(b.name);
+            });
+
+        if (sortDirection === 'desc') {
+            sortedVisibleStudents.reverse();
+        }
+
+        sortedVisibleStudents.forEach(student => {
+            const row = tbody.querySelector(`tr[data-student-id='${student.id}']`);
+            if (row) {
+                tbody.appendChild(row);
+            }
+        });
+
+        const noResultsRow = tbody.querySelector('.no-results-row');
+        if (sortedVisibleStudents.length === 0 && filter) {
+            if (!noResultsRow) {
+                tbody.insertAdjacentHTML('beforeend', '<tr class="no-results-row"><td colspan="3" class="text-center p-8 text-gray-500">No se encontraron alumnos.</td></tr>');
+            }
+        } else if (noResultsRow) {
+            noResultsRow.remove();
+        }
+    }
+
+    /**
+     * Actualiza únicamente una fila de la tabla de alumnos sin redibujar todo.
+     * @param {number} studentId - El ID del alumno a actualizar.
+     */
+    async function updateStudentRow(studentId) {
+        const student = await Student.findById(studentId);
+        if (!student) return;
+
+        const row = document.querySelector(`#students-table-body tr[data-student-id='${student.id}']`);
+        if (!row) return;
+
+        // 1. Recalcular el HTML del estado de pago (lógica extraída de renderStudentsTable)
+        const currentMonthKey = `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`;
         const paymentDate = student.getPaymentDateForMonth(currentMonthKey);
         let paymentStatusHTML = '';
+        
         if (paymentDate) {
             paymentStatusHTML = `<div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-green-200"><span class="font-semibold text-green-600">Pagado</span></div>`;
         } else {
             paymentStatusHTML = `<div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-red-200"><span class="font-semibold text-red-500">No pagado</span></div>`;
         }
 
-        if (!row) {
-            row = document.createElement('tr');
-            row.dataset.studentId = studentIdStr;
-            row.className = 'border-b hover:bg-gray-50';
-            
-            row.innerHTML = `
-                <td class="p-4 font-medium text-gray-800">${student.name}</td>
-                <td class="p-4 payment-status-container">${paymentStatusHTML}</td>
-                <td class="p-4 flex items-center space-x-4">
-                    <button class="edit-student-btn text-blue-600 hover:text-blue-800 font-semibold">Editar</button>
-                    <button class="delete-student-btn text-red-500 hover:text-red-700 font-semibold">Eliminar</button>
-                </td>
-            `;
-            
-            row.querySelector('.edit-student-btn').addEventListener('click', () => handleEditStudent(student.id));
-            row.querySelector('.delete-student-btn').addEventListener('click', () => handleDeleteStudent(student.id));
-            row.classList.add('student-row-clickable');
-            
-            tbody.appendChild(row);
-        } else {
-            // CÓDIGO CORREGIDO: Actualizamos el contenido de las celdas existentes
-            row.cells[0].textContent = student.name;
-            row.cells[1].innerHTML = paymentStatusHTML;
-            // Si tuvieras más celdas, las actualizarías aquí también.
+        // 2. Encontrar la celda de pago y actualizar solo su contenido
+        const paymentCell = row.querySelector('.payment-status-container');
+        if (paymentCell) {
+            paymentCell.innerHTML = paymentStatusHTML;
         }
-
-        row.style.display = matchesFilter ? '' : 'none';
-    });
-    
-    const sortedVisibleStudents = students
-        .filter(s => visibleStudentIds.has(s.id))
-        .sort((a, b) => {
-            let valA, valB;
-            switch (sortKey) {
-                case 'name': valA = a.name.toLowerCase(); valB = b.name.toLowerCase(); break;
-                case 'payment': valA = a.getPaymentDateForMonth(currentMonthKey) ? 1 : 0; valB = b.getPaymentDateForMonth(currentMonthKey) ? 1 : 0; break;
-                default: return 0;
-            }
-            if (valA < valB) return -1;
-            if (valA > valB) return 1;
-            return a.name.localeCompare(b.name);
-        });
-
-    if (sortDirection === 'desc') {
-        sortedVisibleStudents.reverse();
     }
-
-    sortedVisibleStudents.forEach(student => {
-        const row = tbody.querySelector(`tr[data-student-id='${student.id}']`);
-        if (row) {
-            tbody.appendChild(row);
-        }
-    });
-
-    const noResultsRow = tbody.querySelector('.no-results-row');
-    if (sortedVisibleStudents.length === 0 && filter) {
-        if (!noResultsRow) {
-            tbody.insertAdjacentHTML('beforeend', '<tr class="no-results-row"><td colspan="3" class="text-center p-8 text-gray-500">No se encontraron alumnos.</td></tr>');
-        }
-    } else if (noResultsRow) {
-        noResultsRow.remove();
-    }
-}
-
-/**
- * Actualiza únicamente una fila de la tabla de alumnos sin redibujar todo.
- * @param {number} studentId - El ID del alumno a actualizar.
- */
-async function updateStudentRow(studentId) {
-    const student = await Student.findById(studentId);
-    if (!student) return;
-
-    const row = document.querySelector(`#students-table-body tr[data-student-id='${student.id}']`);
-    if (!row) return;
-
-    // 1. Recalcular el HTML del estado de pago (lógica extraída de renderStudentsTable)
-    const currentMonthKey = `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`;
-    const paymentDate = student.getPaymentDateForMonth(currentMonthKey);
-    let paymentStatusHTML = '';
-    
-    if (paymentDate) {
-        paymentStatusHTML = `<div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-green-200"><span class="font-semibold text-green-600">Pagado</span></div>`;
-    } else {
-        paymentStatusHTML = `<div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-red-200"><span class="font-semibold text-red-500">No pagado</span></div>`;
-    }
-
-    // 2. Encontrar la celda de pago y actualizar solo su contenido
-    const paymentCell = row.querySelector('.payment-status-container');
-    if (paymentCell) {
-        paymentCell.innerHTML = paymentStatusHTML;
-    }
-}
 
 
 
@@ -908,6 +918,31 @@ async function openClassModal(classData, date) {
                 NotificationUtils.error('Error: ' + error.message);
             }
         });
+    }
+
+/**
+ * Rellena el menú desplegable del filtro de profesores.
+ */
+    async function populateTeacherFilter() {
+        const select = document.getElementById('teacher-filter-select');
+        // Guardamos el valor actual por si acaso
+        const currentValue = select.value;
+
+        // Limpiamos opciones antiguas, pero dejamos la primera ("Todos")
+        select.length = 1;
+
+        const teachers = await Teacher.findAll();
+        const sortedTeachers = DataUtils.sortBy(teachers, 'name');
+
+        sortedTeachers.forEach(teacher => {
+            const option = DOMUtils.createElement('option');
+            option.value = teacher.name;
+            option.textContent = teacher.name;
+            select.appendChild(option);
+        });
+
+        // Restauramos el valor que estaba seleccionado
+        select.value = currentValue;
     }
 
     async function populateTeacherSelects(selectedValue = '', targetSelectId = null) {

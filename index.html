@@ -58,24 +58,35 @@
         <main class="flex-grow container mx-auto p-4 md:p-8">
 
             <div id="view-horario">
-                <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
-                    <h2 class="text-3xl font-bold text-gray-700">Horario de Clases</h2>
-                    <div class="flex items-center space-x-4">
-                        <button id="prev-week" class="p-2 rounded-full hover:bg-gray-200 transition-colors">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                        </button>
-                        <span id="current-week-display" class="text-lg font-semibold text-gray-600 w-48 text-center"></span>
-                        <button id="next-week" class="p-2 rounded-full hover:bg-gray-200 transition-colors">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                        </button>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <button id="open-one-off-class-modal-btn" class="btn-secondary font-bold py-2 px-4 rounded-lg shadow-sm">
-                            + Añadir Clase Puntual
-                        </button>
-                        <button id="open-template-modal-btn" class="btn-brand font-bold py-2 px-4 rounded-lg shadow-sm">
-                            Gestionar Clases Fijas
-                        </button>
+                <div class="mb-8">
+                    <h2 class="text-3xl font-bold text-gray-700 mb-4">Horario de Clases</h2>
+
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center space-x-2">
+                            <label for="teacher-filter-select" class="text-sm font-medium text-gray-600">Filtro:</label>
+                            <select id="teacher-filter-select" class="p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-brand">
+                                <option value="all">Todos los profesores</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center space-x-2">
+                            <button id="prev-week" class="p-2 rounded-full hover:bg-gray-200 transition-colors">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                            </button>
+                            <span id="current-week-display" class="text-lg font-semibold text-gray-600 w-40 text-center"></span>
+                            <button id="next-week" class="p-2 rounded-full hover:bg-gray-200 transition-colors">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center space-x-2">
+                            <button id="open-one-off-class-modal-btn" class="btn-secondary font-bold py-2 px-4 rounded-lg shadow-sm whitespace-nowrap">
+                                + Añadir Clase Puntual
+                            </button>
+                            <button id="open-template-modal-btn" class="btn-brand font-bold py-2 px-4 rounded-lg shadow-sm whitespace-nowrap">
+                                Gestionar Clases Fijas
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div id="calendar-grid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6"></div>
