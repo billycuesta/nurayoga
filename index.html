@@ -49,6 +49,7 @@
                 <nav class="flex space-x-4">
                     <button id="nav-horario" class="text-white font-semibold border-b-2 border-white pb-1">Horario</button>
                     <button id="nav-alumnos" class="text-white font-semibold border-b-2 border-transparent hover:border-white pb-1 transition-colors">Alumnos</button>
+                    <button id="nav-ingresos" class="text-white font-semibold border-b-2 border-transparent hover:border-white pb-1 transition-colors">Ingresos</button>
                     <button id="nav-configuracion" class="text-white font-semibold border-b-2 border-transparent hover:border-white pb-1 transition-colors">Configuración</button>
 
                 </nav>
@@ -168,6 +169,45 @@
                     </table>
                 </div>
             </div>
+
+            <div id="view-ingresos" class="hidden">
+                <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+                    <h2 class="text-3xl font-bold text-gray-700">Análisis de Ingresos</h2>
+                </div>
+
+                <div class="mb-8">
+                    <h3 class="text-2xl font-semibold text-gray-600 mb-4 border-b pb-2">Ingresos del Mes Actual</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-lg shadow-md">
+                            <h4 class="text-lg font-medium text-gray-500 mb-2">Ingreso Teórico</h4>
+                            <p class="text-sm text-gray-400 mb-4">Lo que se debería ingresar este mes si todos los alumnos activos pagasen.</p>
+                            <div id="ingresos-mes-teorico" class="text-4xl font-bold text-blue-500">- €</div>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md">
+                            <h4 class="text-lg font-medium text-gray-500 mb-2">Ingreso Real</h4>
+                            <p class="text-sm text-gray-400 mb-4">La suma de los pagos que has marcado como recibidos este mes.</p>
+                            <div id="ingresos-mes-real" class="text-4xl font-bold text-green-600">- €</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-2xl font-semibold text-gray-600 mb-4 border-b pb-2">Proyección Anual</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-lg shadow-md">
+                            <h4 class="text-lg font-medium text-gray-500 mb-2">Proyección Anual Teórica</h4>
+                            <p class="text-sm text-gray-400 mb-4">Estimación basada en los ingresos teóricos del mes actual multiplicados por 12.</p>
+                            <div id="ingresos-ano-teorico" class="text-4xl font-bold text-blue-400">- €</div>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md">
+                            <h4 class="text-lg font-medium text-gray-500 mb-2">Ingreso Real Acumulado (Año)</h4>
+                            <p class="text-sm text-gray-400 mb-4">La suma de todos los pagos reales recibidos en lo que va de año.</p>
+                            <div id="ingresos-ano-real" class="text-4xl font-bold text-green-500">- €</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div id="view-configuracion" class="hidden">
                 <div class="config-section">
                     <h2>configuración y mantenimiento</h2>

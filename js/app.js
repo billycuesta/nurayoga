@@ -175,6 +175,7 @@ function setupEventListeners() {
     // Navegación
     document.getElementById('nav-horario').addEventListener('click', () => switchView('horario'));
     document.getElementById('nav-alumnos').addEventListener('click', () => switchView('alumnos'));
+    document.getElementById('nav-ingresos').addEventListener('click', () => switchView('ingresos'));
     document.getElementById('nav-configuracion').addEventListener('click', () => switchView('configuracion'));
 
     // Navegación de semanas
@@ -1290,17 +1291,23 @@ async function handleDeleteAllStudents() {
         populateTeacherSelects();
     }
 
+
 async function switchView(viewName) {
     const isHorario = viewName === 'horario';
     const isAlumnos = viewName === 'alumnos';
+    const isIngresos = viewName === 'ingresos'; // Añadido
     const isConfiguracion = viewName === 'configuracion';
-    
+
+    // Ocultar todas las vistas
     document.getElementById('view-horario').classList.add('hidden');
     document.getElementById('view-alumnos').classList.add('hidden');
+    document.getElementById('view-ingresos').classList.add('hidden'); // Añadido
     document.getElementById('view-configuracion').classList.add('hidden');
-    
+
+    // Resetear bordes de navegación
     document.getElementById('nav-horario').classList.replace('border-white', 'border-transparent');
     document.getElementById('nav-alumnos').classList.replace('border-white', 'border-transparent');
+    document.getElementById('nav-ingresos').classList.replace('border-white', 'border-transparent'); // Añadido
     document.getElementById('nav-configuracion').classList.replace('border-white', 'border-transparent');
 
     if (isHorario) {
@@ -1310,14 +1317,13 @@ async function switchView(viewName) {
     } else if (isAlumnos) {
         document.getElementById('view-alumnos').classList.remove('hidden');
         document.getElementById('nav-alumnos').classList.replace('border-transparent', 'border-white');
-        
-        // --- MODIFICACIÓN CLAVE ---
-        // Obtenemos los datos una sola vez y los pasamos a ambas funciones
-        // para garantizar que estén sincronizadas.
         const students = await Student.findAll();
         await renderStudentStats(students);
         await renderStudentsTable('', students);
-        
+    } else if (isIngresos) { // NUEVO BLOQUE LÓGICO
+        document.getElementById('view-ingresos').classList.remove('hidden');
+        document.getElementById('nav-ingresos').classList.replace('border-transparent', 'border-white');
+        await renderIngresosView(); // Llamamos a la nueva función
     } else if (isConfiguracion) {
         document.getElementById('view-configuracion').classList.remove('hidden');
         document.getElementById('nav-configuracion').classList.replace('border-transparent', 'border-white');
@@ -1362,6 +1368,106 @@ async function renderStudentStats(students = null) {
     document.getElementById('stat-paid-students').textContent = paidStudents;
     document.getElementById('stat-attending-one-class').textContent = attendingOneOrMore;
     document.getElementById('stat-attending-multiple-classes').textContent = attendingMultiple;
+}
+
+/**
+ * Calcula los ingresos teóricos y reales, mensuales y anuales.
+ * @returns {Promise<object>} Un objeto con los totales calculados.
+ */
+async function calculateIncome() {
+    const students = await Student.findAll();
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonthKey = `${currentYear}-${(today.getMonth() + 1).toString().padStart(2, '0')}`;
+
+    let theoreticalMonthly = 0;
+    let realMonthly = 0;
+    let realAnnual = 0;
+
+    for (const student of students) {
+        // Solo contamos alumnos activos para los ingresos teóricos
+        if (student.fechaBaja && student.fechaBaja < today) {
+            continue; // Saltamos los alumnos que ya se han dado de baja
+        }
+
+        const classes = await student.getActiveClasses();
+        const recurringClassesCount = classes.recurring.length;
+        let price = 0;
+
+        // --- LÓGICA DE PRECIOS ---
+        // Asumimos que una clase "Pilates express" contiene esas palabras en su nombre.
+        const hasPilatesExpress = classes.recurring.some(c => 
+            c.name.trim().toUpperCase() === "PILATES EXPRESS '45'"
+        );
+
+        if (recurringClassesCount === 1) {
+            price = hasPilatesExpress ? 30 : 35;
+        } else if (recurringClassesCount === 2) {
+            // Regla: 2 días pero con Pilates express + 1 normal
+            if (hasPilatesExpress) {
+                price = 50;
+            } else {
+                price = 55;
+            }
+        }
+        
+        // Sumamos al total teórico mensual si el alumno tiene alguna clase asignada
+        if (price > 0) {
+            theoreticalMonthly += price;
+        }
+
+        // --- CÁLCULO DE INGRESOS REALES ---
+        // Ingreso real del mes actual
+        if (student.getPaymentDateForMonth(currentMonthKey)) {
+            realMonthly += price;
+        }
+        
+        // Ingreso real de todo el año
+        for (let i = 1; i <= 12; i++) {
+            const monthKey = `${currentYear}-${i.toString().padStart(2, '0')}`;
+            if (student.getPaymentDateForMonth(monthKey)) {
+                // Para el anual, necesitamos recalcular el precio que tenía ESE MES.
+                // Esta es una simplificación: asumimos que el precio actual se aplica a todo el año.
+                // Una versión avanzada guardaría el precio en el historial de pagos.
+                realAnnual += price;
+            }
+        }
+    }
+
+    const theoreticalAnnual = theoreticalMonthly * 12;
+
+    return {
+        theoreticalMonthly,
+        realMonthly,
+        theoreticalAnnual,
+        realAnnual
+    };
+}
+
+/**
+ * Obtiene los datos de ingresos y los muestra en la vista.
+ */
+async function renderIngresosView() {
+    // Mostrar un estado de carga mientras se calcula
+    const formatCurrency = (amount) => new Intl.NumberFormat('es-ES', {
+        style: 'currency',
+        currency: 'EUR',
+        minimumFractionDigits: 0, // No mostrar decimales
+        maximumFractionDigits: 0  // Redondear al entero más cercano
+    }).format(amount);
+        
+    document.getElementById('ingresos-mes-teorico').textContent = 'Calculando...';
+    document.getElementById('ingresos-mes-real').textContent = 'Calculando...';
+    document.getElementById('ingresos-ano-teorico').textContent = 'Calculando...';
+    document.getElementById('ingresos-ano-real').textContent = 'Calculando...';
+
+    const income = await calculateIncome();
+
+    // Actualizar la UI con los valores calculados
+    document.getElementById('ingresos-mes-teorico').textContent = formatCurrency(income.theoreticalMonthly);
+    document.getElementById('ingresos-mes-real').textContent = formatCurrency(income.realMonthly);
+    document.getElementById('ingresos-ano-teorico').textContent = formatCurrency(income.theoreticalAnnual);
+    document.getElementById('ingresos-ano-real').textContent = formatCurrency(income.realAnnual);
 }
 
 
