@@ -224,6 +224,22 @@ function setupEventListeners() {
         oneOffModal.show();
     });
 
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+
+    mobileMenuBtn.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+    });
+
+    // Cierra el menú cuando se hace clic en un enlace
+    document.querySelectorAll('.mobile-nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            const viewName = link.dataset.view;
+            switchView(viewName);
+            mobileMenu.classList.add('hidden'); // Oculta el menú después de la navegación
+        });
+    });
+
     // --- MANEJADORES DE GUARDADO DE FORMULARIOS ---
 
     // Guardar nuevo alumno
@@ -417,7 +433,10 @@ templateForm.onSubmit(async (formData) => {
         }
     });
 }
-    
+   
+
+
+
     function setupTeacherSelects() {
         const templateSelect = document.getElementById('template-teacher-select');
         const oneOffSelect = document.getElementById('one-off-teacher-select');

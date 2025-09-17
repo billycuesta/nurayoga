@@ -1,56 +1,45 @@
-/* ============ NURA YOGA - ESTILO ALO WELLNESS CLUB ============ */
+/* ============ NURA YOGA - FICHERO CSS CORREGIDO Y OPTIMIZADO ============ */
 
-/* Variables CSS basadas en ALO */
+/* Variables CSS basadas en la estética deseada */
 :root {
-    /* Colores manteniendo tu marca pero con estética ALO */
     --brand-primary: #C0A164;
     --brand-primary-dark: #a98c53;
     --brand-primary-light: #d4bd7a;
     --brand-accent: #E5D5B7;
     
-    /* Colores neutros exactos de ALO */
     --background: #FFFFFF;
     --background-secondary: #FEFEFE;
     --surface: #FFFFFF;
     --surface-elevated: #FFFFFF;
     --surface-hover: #F9F9F9;
     
-    /* Texto con jerarquía ALO */
     --text-primary: #000000;
     --text-secondary: #666666;
     --text-tertiary: #999999;
     --text-light: #CCCCCC;
     
-    /* Bordes súper sutiles */
     --border-subtle: #F5F5F5;
     --border-light: #EEEEEE;
     --border-medium: #DDDDDD;
     
-    /* Estados */
     --success: #2D7D32;
     --danger: #D32F2F;
     --warning: #F57C00;
     
-    /* Sombras muy minimalistas */
     --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.05);
     --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.08);
     --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.10);
     
-    /* Espaciado preciso */
     --space-xs: 0.25rem;    /* 4px */
     --space-sm: 0.5rem;     /* 8px */
     --space-md: 1rem;       /* 16px */
     --space-lg: 1.5rem;     /* 24px */
     --space-xl: 2rem;       /* 32px */
     --space-2xl: 3rem;      /* 48px */
-    --space-3xl: 4rem;      /* 64px */
-    --space-4xl: 6rem;      /* 96px */
     
-    /* Bordes redondeados */
     --radius-sm: 4px;
     --radius-md: 8px;
     --radius-lg: 12px;
-    --radius-xl: 16px;
 }
 
 /* ============ RESET MINIMALISTA ============ */
@@ -71,35 +60,17 @@ body {
     letter-spacing: -0.005em;
 }
 
-/* ============ TIPOGRAFÍA ESTILO ALO ============ */
+/* ============ TIPOGRAFÍA ============ */
 h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
     letter-spacing: -0.01em;
     color: var(--text-primary);
     margin-bottom: 0;
 }
-
-h1 { 
-    font-size: 2.5rem; 
-    font-weight: 700;
-    letter-spacing: -0.02em;
-}
-
-h2 { 
-    font-size: 2rem; 
-    font-weight: 600;
-    letter-spacing: -0.015em;
-}
-
-h3 { 
-    font-size: 1.5rem; 
-    font-weight: 600;
-}
-
-h4 { 
-    font-size: 1.25rem; 
-    font-weight: 500;
-}
+h1 { font-size: 2.5rem; font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 2rem; font-weight: 600; letter-spacing: -0.015em; }
+h3 { font-size: 1.5rem; font-weight: 600; }
+h4 { font-size: 1.25rem; font-weight: 500; }
 
 .font-brand {
     font-family: 'Playfair Display', Georgia, serif;
@@ -113,24 +84,16 @@ p {
     font-size: 0.95rem;
 }
 
-/* ============ HEADER ESTILO ALO ============ */
+/* ============ HEADER ============ */
 header {
     background: var(--brand-primary);
-    border-bottom: none;
     position: sticky;
     top: 0;
     z-index: 50;
+    /* Se añade padding-top para el 'notch' del iPhone en la sección final */
 }
 
-header .container {
-    max-width: 1200px;
-    padding: var(--space-sm) var(--space-xl);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-/* Logo estilo ALO en una línea */
+/* Logo */
 header h1 {
     font-size: 1.5rem;
     font-weight: 700;
@@ -152,14 +115,8 @@ header h1 span {
     text-transform: uppercase;
 }
 
-/* ============ NAVEGACIÓN ESTILO ALO ============ */
-nav {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2xl);
-}
-
-nav button {
+/* ============ NAVEGACIÓN DESKTOP ============ */
+nav#main-nav button {
     padding: var(--space-md) 0;
     border: none;
     background: transparent;
@@ -174,96 +131,24 @@ nav button {
     border-bottom: 2px solid transparent;
 }
 
-nav button:hover {
+nav#main-nav button:hover {
     color: white;
     border-bottom-color: rgba(255, 255, 255, 0.5);
 }
 
-nav button.active,
-nav button[style*="border-white"] {
+nav#main-nav button.active,
+nav#main-nav button[style*="border-white"] {
     color: white;
     border-bottom-color: white;
     font-weight: 600;
 }
 
-/* ============ CONTENEDOR PRINCIPAL ESTILO ALO ============ */
+/* ============ CONTENEDOR PRINCIPAL ============ */
 main {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: var(--space-4xl) var(--space-xl);
-    min-height: calc(100vh - 120px);
+    padding: var(--space-2xl) var(--space-xl);
 }
 
-/* ============ TÍTULOS DE SECCIÓN ESTILO ALO ============ */
-.section-title {
-    font-size: 3rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    text-transform: uppercase;
-    letter-spacing: -0.02em;
-    margin-bottom: var(--space-lg);
-}
-
-.section-subtitle {
-    font-size: 1rem;
-    color: var(--text-secondary);
-    font-weight: 400;
-    line-height: 1.6;
-    margin-bottom: var(--space-3xl);
-    max-width: 600px;
-}
-
-/* ============ LAYOUT DE DOS COLUMNAS ============ */
-.two-column-layout {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-4xl);
-    margin-top: var(--space-4xl);
-}
-
-.column-header {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    text-transform: uppercase;
-    letter-spacing: -0.01em;
-    margin-bottom: var(--space-lg);
-}
-
-.column-description {
-    color: var(--text-secondary);
-    font-size: 1rem;
-    line-height: 1.6;
-    margin-bottom: var(--space-xl);
-}
-
-/* ============ LISTAS ESTILO ALO ============ */
-.alo-list {
-    list-style: none;
-    padding: 0;
-}
-
-.alo-list-item {
-    padding: var(--space-lg) 0;
-    border-bottom: 1px solid var(--border-subtle);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 1.1rem;
-    font-weight: 400;
-    color: var(--text-primary);
-}
-
-.alo-list-item:hover {
-    color: var(--brand-primary);
-    padding-left: var(--space-sm);
-}
-
-.alo-list-item:first-child {
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-/* ============ CARDS MINIMALISTAS ============ */
+/* ============ CARDS GENÉRICAS ============ */
 .bg-white {
     background: var(--surface);
     border: 1px solid var(--border-subtle);
@@ -279,7 +164,7 @@ main {
     border-radius: var(--radius-lg);
 }
 
-/* ============ BOTONES ESTILO ALO ============ */
+/* ============ BOTONES ============ */
 .btn-brand {
     background: var(--brand-primary);
     color: white;
@@ -294,7 +179,6 @@ main {
     transition: all 0.2s ease;
     box-shadow: none;
 }
-
 .btn-brand:hover {
     background: var(--brand-primary-dark);
     transform: translateY(-1px);
@@ -314,7 +198,6 @@ main {
     cursor: pointer;
     transition: all 0.2s ease;
 }
-
 .btn-secondary:hover {
     border-color: var(--brand-primary);
     color: var(--brand-primary);
@@ -334,20 +217,14 @@ main {
     cursor: pointer;
     transition: all 0.2s ease;
 }
-
 .btn-danger:hover {
     background: #B71C1C;
     transform: translateY(-1px);
 }
 
-/* ============ INPUTS MINIMALISTAS ============ */
-input[type="text"],
-input[type="email"],
-input[type="tel"],
-input[type="date"],
-input[type="number"],
-select,
-textarea {
+/* ============ FORMULARIOS ============ */
+input[type="text"], input[type="email"], input[type="tel"],
+input[type="date"], input[type="number"], select, textarea {
     border: 1px solid var(--border-light);
     border-radius: var(--radius-sm);
     padding: var(--space-md);
@@ -359,9 +236,7 @@ textarea {
     width: 100%;
 }
 
-input:focus,
-select:focus,
-textarea:focus {
+input:focus, select:focus, textarea:focus {
     outline: none;
     border-color: var(--brand-primary);
     box-shadow: 0 0 0 2px rgba(192, 161, 100, 0.1);
@@ -372,32 +247,11 @@ input::placeholder {
     font-weight: 400;
 }
 
-/* ============ CARDS DE CLASE ESTILO ALO ============ */
-.class-card {
-    background: var(--surface);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
-    padding: var(--space-xl);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    min-height: 180px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.class-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-medium);
-    border-color: var(--brand-primary);
-}
-
-/* ============ MODALES LIMPIOS ============ */
+/* ============ MODALES ============ */
 .modal-backdrop {
     background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(10px);
 }
-
 .modal-backdrop > div {
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-medium);
@@ -405,15 +259,12 @@ input::placeholder {
     background: var(--surface);
 }
 
-/* ============ TABS ESTILO ALO ============ */
+/* ============ TABS (Dentro de Modales) ============ */
 nav[aria-label="Tabs"] {
     border-bottom: 1px solid var(--border-light);
-    background: transparent;
-    margin-bottom: var(--space-xl);
 }
-
 nav[aria-label="Tabs"] button {
-    padding: var(--space-lg) var(--space-xl);
+    padding: var(--space-lg) var(--space-md);
     font-weight: 500;
     font-size: 0.9rem;
     color: var(--text-tertiary);
@@ -425,19 +276,17 @@ nav[aria-label="Tabs"] button {
     letter-spacing: 0.05em;
     cursor: pointer;
 }
-
 nav[aria-label="Tabs"] button:hover {
     color: var(--brand-primary);
 }
-
 nav[aria-label="Tabs"] button.active,
-nav[aria-label="Tabs"] button[style*="brand"] {
+nav[aria-label="Tabs"] button[class*="border-brand"] {
     color: var(--brand-primary);
     border-bottom-color: var(--brand-primary);
     font-weight: 600;
 }
 
-/* ============ TABLA LIMPIA ============ */
+/* ============ TABLA DE ALUMNOS ============ */
 table {
     border-collapse: separate;
     border-spacing: 0;
@@ -448,10 +297,7 @@ table {
     width: 100%;
 }
 
-thead {
-    background: var(--background-secondary);
-}
-
+thead { background: var(--background-secondary); }
 thead th {
     padding: var(--space-lg);
     font-weight: 600;
@@ -462,39 +308,28 @@ thead th {
     border-bottom: 1px solid var(--border-light);
     text-align: left;
 }
-
 tbody tr {
     transition: all 0.2s ease;
     border-bottom: 1px solid var(--border-subtle);
 }
-
-tbody tr:hover {
-    background: var(--surface-hover);
-}
-
+tbody tr:hover { background: var(--surface-hover); }
 tbody td {
     padding: var(--space-lg);
     color: var(--text-primary);
     font-weight: 400;
     font-size: 0.95rem;
 }
+tbody tr:last-child { border-bottom: none; }
 
-tbody tr:last-child {
-    border-bottom: none;
-}
-
-/* ============ SORTABLE HEADERS ============ */
 .sortable-header {
     cursor: pointer;
     user-select: none;
     transition: all 0.2s ease;
 }
-
 .sortable-header:hover {
     background: var(--surface-hover);
     color: var(--brand-primary);
 }
-
 .sort-indicator {
     display: inline-block;
     width: 1rem;
@@ -504,120 +339,31 @@ tbody tr:last-child {
     color: var(--brand-primary);
 }
 
-/* ============ STATS CARDS ============ */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: var(--space-xl);
-    margin-bottom: var(--space-3xl);
-}
-
-.stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
-    padding: var(--space-xl);
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: var(--space-lg);
-}
-
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-soft);
-    border-color: var(--brand-primary);
-}
-
-.stat-icon {
-    flex-shrink: 0;
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--brand-primary);
-}
-
-.stat-content h3 {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: var(--space-xs);
-}
-
-.stat-content p {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-weight: 500;
-}
-
-/* ============ SCROLLBARS INVISIBLES ============ */
-::-webkit-scrollbar {
-    width: 2px;
-    height: 2px;
-}
-
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--border-light);
-    border-radius: 1px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--brand-primary);
-}
-
 /* ============ SECCIÓN DE CONFIGURACIÓN ============ */
-.config-section {
-    background: var(--surface);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
-    padding: var(--space-3xl);
-    margin-bottom: var(--space-2xl);
-}
-
 .config-section h2 {
     font-size: 2.5rem;
     font-weight: 300;
     color: var(--text-primary);
-    margin-bottom: var(--space-3xl);
+    margin-bottom: var(--space-2xl);
     letter-spacing: -0.02em;
 }
-
 .config-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: var(--space-xl);
-    margin-bottom: var(--space-2xl);
 }
-
-@media (max-width: 768px) {
-    .config-grid {
-        grid-template-columns: 1fr;
-        gap: var(--space-lg);
-    }
-}
-
 .config-card {
     background: var(--background-secondary);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
-    padding: var(--space-2xl);
+    padding: var(--space-xl);
     transition: all 0.3s ease;
 }
-
 .config-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-soft);
     border-color: var(--border-light);
 }
-
 .config-card h4 {
     font-size: 1.2rem;
     font-weight: 600;
@@ -626,7 +372,6 @@ tbody tr:last-child {
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
-
 .config-card p {
     color: var(--text-secondary);
     font-size: 0.9rem;
@@ -634,40 +379,16 @@ tbody tr:last-child {
     margin-bottom: var(--space-lg);
 }
 
-/* Zona de peligro ahora es una card más */
 .danger-zone {
     background: linear-gradient(135deg, rgba(211, 47, 47, 0.03) 0%, rgba(211, 47, 47, 0.01) 100%);
     border: 1px solid rgba(211, 47, 47, 0.1);
-    border-radius: var(--radius-lg);
-    padding: var(--space-2xl);
-    transition: all 0.3s ease;
 }
-
 .danger-zone:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-soft);
     border-color: rgba(211, 47, 47, 0.2);
 }
+.danger-zone h4 { color: var(--danger); }
 
-.danger-zone h4 {
-    color: var(--danger);
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin-bottom: var(--space-md);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.danger-zone p {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    margin-bottom: var(--space-lg);
-}
-
-/* Botones específicos para configuración */
-.btn-export {
-    background: var(--brand-primary);
-    color: white;
+.btn-export, .btn-import, .btn-maintenance, .btn-danger-subtle {
     border: none;
     border-radius: var(--radius-sm);
     font-weight: 500;
@@ -681,193 +402,80 @@ tbody tr:last-child {
     align-items: center;
     gap: var(--space-sm);
 }
-
-.btn-export:hover {
-    background: var(--brand-primary-dark);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-subtle);
-}
-
-.btn-import {
-    background: transparent;
-    color: var(--text-primary);
-    border: 1px solid var(--border-medium);
-    border-radius: var(--radius-sm);
-    font-weight: 500;
-    font-size: 0.85rem;
-    padding: var(--space-md) var(--space-xl);
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-sm);
-}
-
-.btn-import:hover {
-    border-color: var(--brand-primary);
-    color: var(--brand-primary);
+.btn-export:hover, .btn-import:hover, .btn-maintenance:hover, .btn-danger-subtle:hover {
     transform: translateY(-1px);
 }
+.btn-export { background: var(--brand-primary); color: white; }
+.btn-export:hover { background: var(--brand-primary-dark); }
+.btn-import { background: transparent; color: var(--text-primary); border: 1px solid var(--border-medium); }
+.btn-import:hover { border-color: var(--brand-primary); color: var(--brand-primary); }
+.btn-maintenance { background: rgba(245, 124, 0, 0.1); color: var(--warning); border: 1px solid rgba(245, 124, 0, 0.2); }
+.btn-maintenance:hover { background: rgba(245, 124, 0, 0.15); border-color: var(--warning); }
+.btn-danger-subtle { background: rgba(211, 47, 47, 0.08); color: var(--danger); border: 1px solid rgba(211, 47, 47, 0.2); }
+.btn-danger-subtle:hover { background: rgba(211, 47, 47, 0.12); border-color: var(--danger); }
 
-.btn-maintenance {
-    background: rgba(245, 124, 0, 0.1);
-    color: var(--warning);
-    border: 1px solid rgba(245, 124, 0, 0.2);
-    border-radius: var(--radius-sm);
-    font-weight: 500;
-    font-size: 0.85rem;
-    padding: var(--space-md) var(--space-xl);
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
+.warning-text { color: var(--warning); font-weight: 500; font-size: 0.85rem; }
+.danger-text { color: var(--danger); font-weight: 500; font-size: 0.85rem; }
 
-.btn-maintenance:hover {
-    background: rgba(245, 124, 0, 0.15);
-    border-color: var(--warning);
-    transform: translateY(-1px);
-}
+/* ============ UTILIDADES DE COLOR ============ */
+.text-brand { color: var(--brand-primary); }
+.border-brand { border-color: var(--brand-primary); }
+.bg-brand { background: var(--brand-primary); }
+.text-green-600 { color: var(--success) !important; }
+.text-red-600 { color: var(--danger) !important; }
 
-.btn-danger-subtle {
-    background: rgba(211, 47, 47, 0.08);
-    color: var(--danger);
-    border: 1px solid rgba(211, 47, 47, 0.2);
-    border-radius: var(--radius-sm);
-    font-weight: 500;
-    font-size: 0.85rem;
-    padding: var(--space-md) var(--space-xl);
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.btn-danger-subtle:hover {
-    background: rgba(211, 47, 47, 0.12);
-    border-color: var(--danger);
-    transform: translateY(-1px);
-}
-
-/* Warning text sutil */
-.warning-text {
-    color: var(--warning);
-    font-weight: 500;
-    font-size: 0.85rem;
-}
-
-.danger-text {
-    color: var(--danger);
-    font-weight: 500;
-    font-size: 0.85rem;
-}
-
-/* ============ UTILIDADES ============ */
-.text-brand {
-    color: var(--brand-primary);
-}
-
-.border-brand {
-    border-color: var(--brand-primary);
-}
-
-.bg-brand {
-    background: var(--brand-primary);
-}
-
-.text-green-600 {
-    color: var(--success) !important;
-}
-
-.text-red-600 {
-    color: var(--danger) !important;
-}
-
-/* ============ ESTADOS ESPECIALES ============ */
-.disabled {
-    opacity: 0.5;
-    pointer-events: none;
-}
-
-.loading {
-    position: relative;
-    pointer-events: none;
-    opacity: 0.7;
-}
-
-/* ============ RESPONSIVIDAD ============ */
+/* ============ RESPONSIVIDAD (CORREGIDO) ============ */
 @media (max-width: 768px) {
     main {
-        padding: var(--space-2xl) var(--space-lg);
+        padding: var(--space-xl) var(--space-lg);
     }
     
+    /* === INICIO DE LA CORRECCIÓN PARA EL HEADER MÓVIL === */
     header .container {
-        flex-direction: column;
-        gap: var(--space-lg);
-        text-align: center;
-        padding: var(--space-lg);
+        /* Mantenemos la dirección de fila para que esté todo en una línea */
+        flex-direction: row;
+        /* Reducimos el padding para que sea más compacto */
+        padding: var(--space-sm) var(--space-lg);
     }
     
     header h1 {
-        font-size: 1.5rem;
+        /* Reducimos un poco el tamaño del logo en móvil para que quepa bien */
+        font-size: 1.25rem; 
     }
-    
-    nav {
-        gap: var(--space-lg);
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-    
-    nav button {
-        font-size: 0.8rem;
-        padding: var(--space-sm) 0;
-    }
-    
-    .two-column-layout {
-        grid-template-columns: 1fr;
-        gap: var(--space-2xl);
-    }
-    
-    .section-title {
-        font-size: 2rem;
-    }
-    
-    .column-header {
-        font-size: 1.5rem;
-    }
-    
-    .class-card {
-        padding: var(--space-lg);
-        min-height: 150px;
-    }
-    
-    .stats-grid {
+    /* === FIN DE LA CORRECCIÓN === */
+
+    .config-grid {
         grid-template-columns: 1fr;
     }
-    
+
     table {
         font-size: 0.85rem;
     }
-    
-    thead th,
-    tbody td {
+    thead th, tbody td {
         padding: var(--space-md);
     }
 }
 
-@media (max-width: 640px) {
-    main {
-        padding: var(--space-xl) var(--space-md);
-    }
+/* ============ AJUSTES PARA iPhone (SAFE AREA) Y FEEDBACK TÁCTIL ============ */
+body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+}
 
-    .btn-brand,
-    .btn-secondary,
-    .btn-danger {
-        padding: var(--space-sm) var(--space-lg);
-        font-size: 0.8rem;
-    }
+header.bg-brand {
+    padding-top: env(safe-area-inset-top);
+}
+
+.btn-brand:active, .btn-secondary:active {
+    transform: translateY(1px);
+    filter: brightness(0.9);
+}
+
+/* Elimina el recuadro azul/gris que aparece en iOS al tocar un elemento */
+* {
+    -webkit-tap-highlight-color: transparent;
 }
 
 /* ============ ACCESIBILIDAD ============ */
@@ -879,56 +487,7 @@ tbody tr:last-child {
     }
 }
 
-button:focus-visible,
-input:focus-visible,
-select:focus-visible {
+button:focus-visible, input:focus-visible, select:focus-visible {
     outline: 2px solid var(--brand-primary);
     outline-offset: 2px;
-}
-
-
-body {
-    /* Aseguramos que los contenedores principales respeten los márgenes */
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-}
-
-/* Ajustamos el header para que no se pegue al 'notch' */
-header.bg-brand {
-    padding-top: env(safe-area-inset-top);
-}
-
-
-#mobile-tab-bar {
-    /* Respetamos la barra de gestos del iPhone */
-    padding-bottom: env(safe-area-inset-bottom);
-}
-
-.mobile-nav-btn {
-    color: #9CA3AF; /* gris de Tailwind */
-    transition: color 0.2s ease-in-out;
-}
-
-.mobile-nav-btn.active {
-    color: var(--brand-primary); /* Tu color de marca */
-}
-
-/* En style.css, al final */
-
-/* Elimina el recuadro azul/gris que aparece en iOS al tocar un elemento */
-* {
-    -webkit-tap-highlight-color: transparent;
-}
-
-/* Da feedback visual INMEDIATO cuando un usuario pulsa un botón, antes de que se levante el dedo */
-.btn-brand:active, .btn-secondary:active {
-    transform: translateY(1px); /* Mueve el botón ligeramente hacia abajo */
-    filter: brightness(0.9); /* Lo oscurece un poco */
-}
-
-/* También para los botones de la barra de navegación inferior */
-.mobile-nav-btn:active {
-    background-color: #f3f4f6; /* Un gris muy claro para indicar que se ha pulsado */
 }

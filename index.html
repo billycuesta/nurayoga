@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 
     <title>Nura Yoga Admin</title>
 
@@ -40,21 +40,40 @@
 
     <div id="app" class="min-h-screen flex flex-col">
 
+
         <header class="bg-brand shadow-md">
             <div class="container mx-auto px-4 py-4 flex justify-between items-center">
                 <div class="flex items-center space-x-3">
                     <img src="icons/icon-96x96.png" alt="Nura Yoga Logo" class="w-8 h-8">
                     <h1 class="text-2xl font-bold text-white tracking-wider">nura <span class="font-light">yoga studio</span></h1>
                 </div>
-                <nav class="flex space-x-4">
+
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" class="text-white p-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-4 6h4" />
+                        </svg>
+                    </button>
+                </div>
+
+                <nav id="main-nav" class="hidden md:flex space-x-4">
                     <button id="nav-horario" class="text-white font-semibold border-b-2 border-white pb-1">Horario</button>
                     <button id="nav-alumnos" class="text-white font-semibold border-b-2 border-transparent hover:border-white pb-1 transition-colors">Alumnos</button>
                     <button id="nav-ingresos" class="text-white font-semibold border-b-2 border-transparent hover:border-white pb-1 transition-colors">Ingresos</button>
                     <button id="nav-configuracion" class="text-white font-semibold border-b-2 border-transparent hover:border-white pb-1 transition-colors">Configuración</button>
+                </nav>
+            </div>
 
+            <div id="mobile-menu" class="hidden md:hidden bg-brand/90 backdrop-blur-sm">
+                <nav class="flex flex-col items-center p-4 space-y-2">
+                    <button class="mobile-nav-link text-white py-2" data-view="horario">Horario</button>
+                    <button class="mobile-nav-link text-white py-2" data-view="alumnos">Alumnos</button>
+                    <button class="mobile-nav-link text-white py-2" data-view="ingresos">Ingresos</button>
+                    <button class="mobile-nav-link text-white py-2" data-view="configuracion">Configuración</button>
                 </nav>
             </div>
         </header>
+
         <main class="flex-grow container mx-auto p-4 md:p-8">
 
             <div id="view-horario">
