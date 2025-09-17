@@ -623,6 +623,35 @@ async function renderStudentsTable(filter = '', students = null) {
     }
 }
 
+/**
+ * Actualiza únicamente una fila de la tabla de alumnos sin redibujar todo.
+ * @param {number} studentId - El ID del alumno a actualizar.
+ */
+async function updateStudentRow(studentId) {
+    const student = await Student.findById(studentId);
+    if (!student) return;
+
+    const row = document.querySelector(`#students-table-body tr[data-student-id='${student.id}']`);
+    if (!row) return;
+
+    // 1. Recalcular el HTML del estado de pago (lógica extraída de renderStudentsTable)
+    const currentMonthKey = `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`;
+    const paymentDate = student.getPaymentDateForMonth(currentMonthKey);
+    let paymentStatusHTML = '';
+    
+    if (paymentDate) {
+        paymentStatusHTML = `<div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-green-200"><span class="font-semibold text-green-600">Pagado</span></div>`;
+    } else {
+        paymentStatusHTML = `<div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-red-200"><span class="font-semibold text-red-500">No pagado</span></div>`;
+    }
+
+    // 2. Encontrar la celda de pago y actualizar solo su contenido
+    const paymentCell = row.querySelector('.payment-status-container');
+    if (paymentCell) {
+        paymentCell.innerHTML = paymentStatusHTML;
+    }
+}
+
 
 
     async function renderTemplateEditor() {
@@ -1706,11 +1735,11 @@ async function handleTogglePayment(studentId) {
         const currentMonthKey = `${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}`;
         await student.togglePaymentForMonth(currentMonthKey);
         
-        // AÑADE ESTA LÍNEA para refrescar las tarjetas de estadísticas
+        // Mantenemos esto para que las estadísticas de arriba se actualicen
         await renderStudentStats(); 
         
-        // Esta línea ya existía y refresca la tabla de alumnos
-        await renderStudentsTable(document.getElementById('student-search-input').value);
+        // CAMBIO CLAVE: Usamos la nueva función que no mueve el scroll
+        await updateStudentRow(studentId);
 
     } catch (error) {
         console.error("Error al cambiar el estado de pago:", error);
