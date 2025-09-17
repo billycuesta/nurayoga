@@ -315,50 +315,71 @@
 
     <div id="schedule-template-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col">
+            
             <div class="p-6 border-b flex justify-between items-center">
-                 <h3 class="text-2xl font-bold text-gray-800">Plantilla de Clases Fijas</h3>
-                 <button id="close-template-modal" class="p-2 text-gray-400 hover:text-gray-700">&times;</button>
+                <h3 class="text-2xl font-bold text-gray-800">Plantilla de Clases Fijas</h3>
+                <button id="close-template-modal" class="p-2 text-gray-400 hover:text-gray-700">&times;</button>
             </div>
-            <div class="flex-grow p-6 overflow-y-auto space-y-8">
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 id="template-form-title" class="font-semibold text-lg mb-4 text-gray-700">Añadir Nueva Clase Fija</h4>
-                    <form id="template-class-form" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+
+            <div class="flex-grow p-6 overflow-y-auto space-y-8 bg-gray-50">
+                
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                    <h4 id="template-form-title" class="font-semibold text-lg mb-6 text-gray-800 border-b pb-4">
+                        Añadir Nueva Clase Fija
+                    </h4>
+                    
+                    <form id="template-class-form" class="space-y-6">
                         <input type="hidden" id="template-class-id">
-                        <div>
-                            <label for="template-day" class="block text-sm font-medium text-gray-600">Día</label>
-                            <select id="template-day" name="template-day" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand">
-                                <option value="1">Lunes</option><option value="2">Martes</option><option value="3">Miércoles</option><option value="4">Jueves</option><option value="5">Viernes</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-600">Hora</label>
-                            <div class="flex items-center space-x-2 mt-1">
-                                <select id="template-time-hour" class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand"></select>
-                                <span>:</span>
-                                <select id="template-time-minute" class="block w-full p-2 border border-gray-300 rounded-md ..."></select>
+                
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            
+                            <div class="md:col-span-1">
+                                <label for="template-name" class="block text-sm font-medium text-gray-700">Nombre Clase</label>
+                                <input type="text" id="template-name" name="template-name" required placeholder="Ej. Vinyasa Flow" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand">
+                            </div>
+                
+                            <div>
+                                <label for="template-day" class="block text-sm font-medium text-gray-700">Día</label>
+                                <select id="template-day" name="template-day" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand">
+                                    <option value="1">Lunes</option><option value="2">Martes</option><option value="3">Miércoles</option><option value="4">Jueves</option><option value="5">Viernes</option>
+                                </select>
+                            </div>
+                
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Hora</label>
+                                <div class="flex items-center space-x-2 mt-1">
+                                    <select id="template-time-hour" class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand"></select>
+                                    <span>:</span>
+                                    <select id="template-time-minute" class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand"></select>
+                                </div>
                             </div>
                         </div>
-                        <div>
-                            <label for="template-name" class="block text-sm font-medium text-gray-600">Nombre Clase</label>
-                            <input type="text" id="template-name" name="template-name" required placeholder="Ej. Vinyasa Flow" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand">
-                        </div>
-                        <div>
-                            <label for="template-teacher-select" class="block text-sm font-medium text-gray-600">Profesor/a</label>
-                            <select id="template-teacher-select" name="template-teacher-select" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand"></select>
-                        </div>
-                        <div class="flex space-x-2">
-                             <div>
-                                <label for="template-capacity" class="block text-sm font-medium text-gray-600">Plazas</label>
+                
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="md:col-span-1">
+                                <label for="template-teacher-select" class="block text-sm font-medium text-gray-700">Profesor/a</label>
+                                <select id="template-teacher-select" name="template-teacher-select" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand"></select>
+                            </div>
+                            
+                            <div>
+                                <label for="template-capacity" class="block text-sm font-medium text-gray-700">Plazas</label>
                                 <input type="number" id="template-capacity" name="template-capacity" required value="10" min="1" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand">
                             </div>
-                            <button type="submit" id="save-template-class-btn" class="btn-brand h-10 mt-auto font-bold px-4 rounded-lg self-end">Añadir</button>
+                        </div>
+                
+                        <div class="pt-4 flex justify-end">
+                            <button type="submit" id="save-template-class-btn" class="btn-brand font-bold py-2 px-6 rounded-lg shadow-sm">
+                                Añadir
+                            </button>
                         </div>
                     </form>
                 </div>
+                
                 <div id="template-display" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6"></div>
             </div>
-             <div class="p-4 bg-gray-50 rounded-b-lg flex justify-end">
-                 <button id="close-template-modal-btn" class="btn-secondary font-bold py-2 px-4 rounded-lg">Cerrar</button>
+
+            <div class="p-4 bg-white border-t rounded-b-lg flex justify-end">
+                <button id="close-template-modal-btn" class="btn-secondary font-bold py-2 px-4 rounded-lg">Cerrar</button>
             </div>
         </div>
     </div>
