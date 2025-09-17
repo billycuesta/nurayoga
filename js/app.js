@@ -177,7 +177,7 @@ function setupEventListeners() {
     document.getElementById('nav-alumnos').addEventListener('click', () => switchView('alumnos'));
     document.getElementById('nav-configuracion').addEventListener('click', () => switchView('configuracion'));
 
-    // Navegación de semanas - CORREGIDO
+    // Navegación de semanas
     document.getElementById('prev-week').addEventListener('click', () => {
         currentDate.setDate(currentDate.getDate() - 7);
         renderCalendar();
@@ -193,25 +193,19 @@ function setupEventListeners() {
         renderStudentsTable(e.target.value);
     });
 
-    // --- CÓDIGO NUEVO PARA ORDENACIÓN DE TABLA ---
+    // Ordenación de tabla de alumnos
     document.querySelectorAll('.sortable-header').forEach(header => {
         header.addEventListener('click', () => {
             const newSortKey = header.dataset.sortKey;
-
             if (sortKey === newSortKey) {
-                // Si se hace clic en la misma columna, se invierte la dirección
                 sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
             } else {
-                // Si se hace clic en una nueva columna, se ordena por esa y se resetea a 'asc'
                 sortKey = newSortKey;
                 sortDirection = 'asc';
             }
-            
-            // Volvemos a renderizar la tabla con la nueva ordenación
             renderStudentsTable(document.getElementById('student-search-input').value); 
         });
     });
-    // --- FIN DEL CÓDIGO NUEVO ---
 
     // Botones para abrir modales principales
     document.getElementById('open-new-student-modal').addEventListener('click', () => studentModal.show());
@@ -223,6 +217,8 @@ function setupEventListeners() {
         resetOneOffForm();
         oneOffModal.show();
     });
+
+    // --- MANEJADORES DE GUARDADO DE FORMULARIOS ---
 
     // Guardar nuevo alumno
     studentForm.onSubmit(async (formData) => {
@@ -244,16 +240,83 @@ function setupEventListeners() {
         }
     });
 
+    // Guardar Clase Puntual
+    oneOffForm.onSubmit(async (formData) => {
+        try {
+            const classId = formData['one-off-class-id'] ? parseInt(formData['one-off-class-id']) : null;
+            const hour = document.getElementById('one-off-time-hour').value;
+            const minute = document.getElementById('one-off-time-minute').value;
+            
+            if (!hour || !minute) {
+                NotificationUtils.error('Por favor, selecciona una hora y minutos válidos.');
+                return;
+            }
+            const combinedTime = `${hour}:${minute}`;
+
+            const classData = {
+                id: classId,
+                date: formData['one-off-date'],
+                name: formData['one-off-name'],
+                teacher: formData['one-off-teacher-select'],
+                capacity: parseInt(formData['one-off-capacity']),
+                time: combinedTime
+            };
+
+            const oneOffClass = new OneOffClass(classData);
+            await oneOffClass.save();
+            
+            NotificationUtils.success(`Clase puntual ${classId ? 'actualizada' : 'guardada'} correctamente.`);
+            oneOffModal.hide();
+            await renderCalendar();
+
+        } catch (error) {
+            console.error('Error saving one-off class:', error);
+            NotificationUtils.error(`Error al guardar la clase: ${error.message}`);
+        }
+    });
+
+    // --- INICIO: LÓGICA PARA GUARDAR CLASE FIJA (FALTABA) ---
+    templateForm.onSubmit(async (formData) => {
+        try {
+            const classId = formData['template-class-id'] ? parseInt(formData['template-class-id']) : null;
+            const hour = document.getElementById('template-time-hour').value;
+            const minute = document.getElementById('template-time-minute').value;
+
+            if (!hour || !minute) {
+                NotificationUtils.error('Por favor, selecciona una hora y minutos válidos.');
+                return;
+            }
+            const combinedTime = `${hour}:${minute}`;
+
+            const classData = {
+                id: classId,
+                day: parseInt(formData['template-day']),
+                name: formData['template-name'],
+                teacher: formData['template-teacher-select'],
+                capacity: parseInt(formData['template-capacity']),
+                time: combinedTime
+            };
+            
+            const recurringClass = new RecurringClass(classData);
+            await recurringClass.save();
+
+            NotificationUtils.success(`Clase fija ${classId ? 'actualizada' : 'guardada'} correctamente.`);
+            resetTemplateForm(); // Resetea y actualiza la lista de clases fijas
+            await renderCalendar(); // Actualiza el calendario principal
+
+        } catch (error) {
+            console.error('Error saving recurring class template:', error);
+            NotificationUtils.error(`Error al guardar la clase: ${error.message}`);
+        }
+    });
+    // --- FIN: LÓGICA PARA GUARDAR CLASE FIJA ---
+
     // Botones de la sección de Configuración
     document.getElementById('export-data-btn').addEventListener('click', handleExportData);
     const importInput = document.getElementById('import-data-input');
-    document.getElementById('import-data-btn').addEventListener('click', () => {
-        importInput.click();
-    });
+    document.getElementById('import-data-btn').addEventListener('click', () => importInput.click());
     importInput.addEventListener('change', handleImportData);
     document.getElementById('clear-all-inscriptions-btn').addEventListener('click', handleClearAllInscriptions);
-    
-    // Listener para el nuevo botón de eliminar todos los alumnos
     document.getElementById('delete-all-students-btn').addEventListener('click', handleDeleteAllStudents);
 
     // Event delegation para la tabla de alumnos
@@ -263,7 +326,6 @@ function setupEventListeners() {
         
         const paymentCell = target.closest('.payment-status-cell');
         if (paymentCell) {
-            // Buscamos el ID en el elemento padre 'tr' que lo tiene
             const studentId = parseInt(paymentCell.closest('tr').dataset.studentId);
             if (studentId) {
                 handleTogglePayment(studentId);
@@ -274,11 +336,8 @@ function setupEventListeners() {
         const studentRow = target.closest('.student-row-clickable');
         if (studentRow) {
             const studentId = parseInt(studentRow.dataset.studentId);
-            if (studentId) {
-                // Nos aseguramos de no activar esto si se hace clic en un botón
-                if (!target.closest('button')) {
-                    showStudentDetails(studentId);
-                }
+            if (studentId && !target.closest('button')) {
+                showStudentDetails(studentId);
             }
         }
     });
