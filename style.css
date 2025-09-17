@@ -885,3 +885,50 @@ select:focus-visible {
     outline: 2px solid var(--brand-primary);
     outline-offset: 2px;
 }
+
+
+body {
+    /* Aseguramos que los contenedores principales respeten los márgenes */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+}
+
+/* Ajustamos el header para que no se pegue al 'notch' */
+header.bg-brand {
+    padding-top: env(safe-area-inset-top);
+}
+
+
+#mobile-tab-bar {
+    /* Respetamos la barra de gestos del iPhone */
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.mobile-nav-btn {
+    color: #9CA3AF; /* gris de Tailwind */
+    transition: color 0.2s ease-in-out;
+}
+
+.mobile-nav-btn.active {
+    color: var(--brand-primary); /* Tu color de marca */
+}
+
+/* En style.css, al final */
+
+/* Elimina el recuadro azul/gris que aparece en iOS al tocar un elemento */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Da feedback visual INMEDIATO cuando un usuario pulsa un botón, antes de que se levante el dedo */
+.btn-brand:active, .btn-secondary:active {
+    transform: translateY(1px); /* Mueve el botón ligeramente hacia abajo */
+    filter: brightness(0.9); /* Lo oscurece un poco */
+}
+
+/* También para los botones de la barra de navegación inferior */
+.mobile-nav-btn:active {
+    background-color: #f3f4f6; /* Un gris muy claro para indicar que se ha pulsado */
+}
