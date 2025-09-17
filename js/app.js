@@ -241,74 +241,143 @@ function setupEventListeners() {
     });
 
     // Guardar Clase Puntual
-    oneOffForm.onSubmit(async (formData) => {
-        try {
-            const classId = formData['one-off-class-id'] ? parseInt(formData['one-off-class-id']) : null;
-            const hour = document.getElementById('one-off-time-hour').value;
-            const minute = document.getElementById('one-off-time-minute').value;
-            
-            if (!hour || !minute) {
-                NotificationUtils.error('Por favor, selecciona una hora y minutos válidos.');
-                return;
-            }
-            const combinedTime = `${hour}:${minute}`;
+// app.js -> Reemplaza tu función oneOffForm.onSubmit
 
-            const classData = {
-                id: classId,
-                date: formData['one-off-date'],
-                name: formData['one-off-name'],
-                teacher: formData['one-off-teacher-select'],
-                capacity: parseInt(formData['one-off-capacity']),
-                time: combinedTime
-            };
-
-            const oneOffClass = new OneOffClass(classData);
-            await oneOffClass.save();
-            
-            NotificationUtils.success(`Clase puntual ${classId ? 'actualizada' : 'guardada'} correctamente.`);
-            oneOffModal.hide();
-            await renderCalendar();
-
-        } catch (error) {
-            console.error('Error saving one-off class:', error);
-            NotificationUtils.error(`Error al guardar la clase: ${error.message}`);
+oneOffForm.onSubmit(async (formData) => {
+    try {
+        const classId = formData['one-off-class-id'] ? parseInt(formData['one-off-class-id']) : null;
+        const hour = document.getElementById('one-off-time-hour').value;
+        const minute = document.getElementById('one-off-time-minute').value;
+        
+        if (!hour || !minute) {
+            NotificationUtils.error('Por favor, selecciona una hora y minutos válidos.');
+            return;
         }
-    });
+        const combinedTime = `${hour}:${minute}`;
+        const date = formData['one-off-date'];
 
-    // --- INICIO: LÓGICA PARA GUARDAR CLASE FIJA (FALTABA) ---
-    templateForm.onSubmit(async (formData) => {
-        try {
-            const classId = formData['template-class-id'] ? parseInt(formData['template-class-id']) : null;
-            const hour = document.getElementById('template-time-hour').value;
-            const minute = document.getElementById('template-time-minute').value;
+        // --- INICIO: LÓGICA DE VALIDACIÓN MEJORADA ---
+        
+        // 1. Comprobar contra otras clases PUNTUALES
+        const allOneOffClasses = await OneOffClass.findAll();
+        const conflictWithOneOff = allOneOffClasses.some(
+            clase => clase.date === date && 
+                     clase.time === combinedTime && 
+                     clase.id !== classId
+        );
 
-            if (!hour || !minute) {
-                NotificationUtils.error('Por favor, selecciona una hora y minutos válidos.');
-                return;
-            }
-            const combinedTime = `${hour}:${minute}`;
-
-            const classData = {
-                id: classId,
-                day: parseInt(formData['template-day']),
-                name: formData['template-name'],
-                teacher: formData['template-teacher-select'],
-                capacity: parseInt(formData['template-capacity']),
-                time: combinedTime
-            };
-            
-            const recurringClass = new RecurringClass(classData);
-            await recurringClass.save();
-
-            NotificationUtils.success(`Clase fija ${classId ? 'actualizada' : 'guardada'} correctamente.`);
-            resetTemplateForm(); // Resetea y actualiza la lista de clases fijas
-            await renderCalendar(); // Actualiza el calendario principal
-
-        } catch (error) {
-            console.error('Error saving recurring class template:', error);
-            NotificationUtils.error(`Error al guardar la clase: ${error.message}`);
+        if (conflictWithOneOff) {
+            NotificationUtils.error('Ya existe otra clase puntual en esa misma fecha y hora.');
+            return;
         }
-    });
+
+        // 2. Comprobar contra clases FIJAS
+        const dayOfWeek = new Date(date + 'T00:00:00').getDay(); // Domingo=0, Lunes=1, ...
+        const appDay = dayOfWeek === 0 ? 7 : dayOfWeek; // Convertimos a la convención de la app (Lunes=1, ...)
+        
+        const allRecurringClasses = await RecurringClass.findAll();
+        const conflictWithRecurring = allRecurringClasses.some(
+            clase => clase.day === appDay &&
+                     clase.time === combinedTime
+        );
+
+        if (conflictWithRecurring) {
+            NotificationUtils.error('El horario coincide con una clase fija programada para ese día de la semana.');
+            return;
+        }
+        // --- FIN: LÓGICA DE VALIDACIÓN MEJORADA ---
+
+        const classData = {
+            id: classId,
+            date: date,
+            name: formData['one-off-name'],
+            teacher: formData['one-off-teacher-select'],
+            capacity: parseInt(formData['one-off-capacity']),
+            time: combinedTime
+        };
+
+        const oneOffClass = new OneOffClass(classData);
+        await oneOffClass.save();
+        
+        NotificationUtils.success(`Clase puntual ${classId ? 'actualizada' : 'guardada'} correctamente.`);
+        oneOffModal.hide();
+        await renderCalendar();
+
+    } catch (error) {
+        console.error('Error saving one-off class:', error);
+        NotificationUtils.error(`Error al guardar la clase: ${error.message}`);
+    }
+});
+
+
+templateForm.onSubmit(async (formData) => {
+    try {
+        const classId = formData['template-class-id'] ? parseInt(formData['template-class-id']) : null;
+        const hour = document.getElementById('template-time-hour').value;
+        const minute = document.getElementById('template-time-minute').value;
+
+        if (!hour || !minute) {
+            NotificationUtils.error('Por favor, selecciona una hora y minutos válidos.');
+            return;
+        }
+        const combinedTime = `${hour}:${minute}`;
+        const day = parseInt(formData['template-day']);
+
+        // --- INICIO: LÓGICA DE VALIDACIÓN MEJORADA ---
+
+        // 1. Comprobar contra otras clases FIJAS
+        const allRecurringClasses = await RecurringClass.findAll();
+        const conflictWithRecurring = allRecurringClasses.some(
+            clase => clase.day === day && 
+                     clase.time === combinedTime && 
+                     clase.id !== classId
+        );
+
+        if (conflictWithRecurring) {
+            NotificationUtils.error('Ya existe otra clase fija en ese mismo día y hora.');
+            return;
+        }
+        
+        // 2. Comprobar contra clases PUNTUALES en la semana actual
+        const startOfWeek = DateUtils.getStartOfWeek(currentDate);
+        const targetDate = new Date(startOfWeek);
+        targetDate.setDate(startOfWeek.getDate() + (day - 1)); // day es 1-indexed (Lunes=1)
+        const targetDateString = DateUtils.toDateString(targetDate);
+
+        const allOneOffClasses = await OneOffClass.findAll();
+        const conflictWithOneOff = allOneOffClasses.some(
+            clase => clase.date === targetDateString &&
+                     clase.time === combinedTime
+        );
+        
+        if (conflictWithOneOff) {
+            NotificationUtils.error(`El horario coincide con una clase puntual programada para el ${targetDate.toLocaleDateString('es-ES',{day:'numeric', month:'numeric'})}.`);
+            return;
+        }
+        // --- FIN: LÓGICA DE VALIDACIÓN MEJORADA ---
+
+        const classData = {
+            id: classId,
+            day: day,
+            name: formData['template-name'],
+            teacher: formData['template-teacher-select'],
+            capacity: parseInt(formData['template-capacity']),
+            time: combinedTime
+        };
+        
+        const recurringClass = new RecurringClass(classData);
+        await recurringClass.save();
+
+        NotificationUtils.success(`Clase fija ${classId ? 'actualizada' : 'guardada'} correctamente.`);
+        resetTemplateForm();
+        await renderCalendar();
+
+    } catch (error) {
+        console.error('Error saving recurring class template:', error);
+        NotificationUtils.error(`Error al guardar la clase: ${error.message}`);
+    }
+});
+
     // --- FIN: LÓGICA PARA GUARDAR CLASE FIJA ---
 
     // Botones de la sección de Configuración

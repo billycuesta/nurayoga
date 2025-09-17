@@ -432,11 +432,12 @@ const NotificationUtils = {
 
         // Estilos e iconos por tipo
         const styles = {
-            success: { icon: '✅', classes: 'bg-green-100 border-l-4 border-green-400 text-green-700' },
-            error: { icon: '❌', classes: 'bg-red-100 border-l-4 border-red-400 text-red-700' },
-            warning: { icon: '⚠️', classes: 'bg-yellow-100 border-l-4 border-yellow-400 text-yellow-700' },
-            info: { icon: 'ℹ️', classes: 'bg-blue-100 border-l-4 border-blue-400 text-blue-700' }
+            success: { icon: '', classes: 'bg-green-100 border-l-4 border-green-400 text-green-700' },
+            error: { icon: '', classes: 'bg-red-100 border-l-4 border-red-400 text-red-700' },
+            warning: { icon: '', classes: 'bg-yellow-100 border-l-4 border-yellow-400 text-yellow-700' },
+            info: { icon: '', classes: 'bg-blue-100 border-l-4 border-blue-400 text-blue-700' }
         };
+
         const style = styles[type] || styles['info'];
 
         // Crear la notificación
