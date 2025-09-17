@@ -451,7 +451,6 @@ function updateSortIndicators() {
     });
 }
 
-
 async function renderStudentsTable(filter = '') {
     updateSortIndicators();
 
@@ -476,18 +475,16 @@ async function renderStudentsTable(filter = '') {
 
         let row = rowsMap.get(studentIdStr);
 
-        // Generamos el HTML del estado de pago SIEMPRE, para crearlo o actualizarlo
         const paymentDate = student.getPaymentDateForMonth(currentMonthKey);
         let paymentStatusHTML = '';
         if (paymentDate) {
-            const formattedDate = new Date(paymentDate).toLocaleDateString('es-ES');
-            paymentStatusHTML = `<div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-green-200"><span class="font-semibold text-green-600">Pagado el ${formattedDate}</span></div>`;
+            // --- MODIFICACIÓN AQUÍ: Se ha eliminado la fecha detallada ---
+            paymentStatusHTML = `<div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-green-200"><span class="font-semibold text-green-600">Pagado</span></div>`;
         } else {
             paymentStatusHTML = `<div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-red-200"><span class="font-semibold text-red-500">No pagado</span></div>`;
         }
 
         if (!row) {
-            // Si la fila no existe, la creamos
             row = document.createElement('tr');
             row.dataset.studentId = studentIdStr;
             row.className = 'border-b hover:bg-gray-50';
@@ -507,19 +504,15 @@ async function renderStudentsTable(filter = '') {
             
             tbody.appendChild(row);
         } else {
-            // --- INICIO DE LA CORRECCIÓN ---
-            // Si la fila YA EXISTE, solo actualizamos la celda de pago
             const paymentCell = row.querySelector('.payment-status-container');
             if (paymentCell) {
                 paymentCell.innerHTML = paymentStatusHTML;
             }
-            // --- FIN DE LA CORRECCIÓN ---
         }
 
         row.style.display = matchesFilter ? '' : 'none';
     });
     
-    // El resto de la función (ordenación y reordenado del DOM) permanece igual
     const sortedVisibleStudents = students
         .filter(s => visibleStudentIds.has(s.id))
         .sort((a, b) => {
@@ -1425,6 +1418,65 @@ async function showStudentDetails(studentId) {
     } else {
         oneOffList.innerHTML = '<p class="text-gray-500">No está inscrito/a en ninguna clase puntual.</p>';
     }
+
+    // --- INICIO: NUEVA LÓGICA DE PAGOS ---
+    const paymentContainer = document.getElementById('student-payment-history');
+    paymentContainer.innerHTML = ''; // Limpiar contenido previo
+
+    const startDate = new Date(student.fechaAlta);
+    const endDate = new Date();
+    let currentDateIterator = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+
+    while (currentDateIterator <= endDate) {
+        const year = currentDateIterator.getFullYear();
+        const month = currentDateIterator.getMonth() + 1;
+        const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
+        const monthName = currentDateIterator.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+        
+        const paymentDate = student.getPaymentDateForMonth(monthKey);
+        
+        const paymentRow = DOMUtils.createElement('div', 'flex justify-between items-center bg-gray-100 p-2 rounded');
+        
+        let statusHTML;
+        let buttonHTML;
+
+        if (paymentDate) {
+            const formattedDate = new Date(paymentDate).toLocaleDateString('es-ES');
+            statusHTML = `<span class="text-sm text-green-700">Pagado</span>`;
+            buttonHTML = `<button data-month-key="${monthKey}" class="toggle-payment-btn text-xs font-semibold text-gray-500 hover:text-red-500">Deshacer</button>`;
+        } else {
+            statusHTML = `<span class="text-sm font-semibold text-red-600">Pendiente</span>`;
+            buttonHTML = `<button data-month-key="${monthKey}" class="toggle-payment-btn text-xs font-semibold text-white bg-green-500 hover:bg-green-600 px-2 py-1 rounded">Marcar Pagado</button>`;
+        }
+
+        paymentRow.innerHTML = `
+            <div>
+                <p class="font-semibold capitalize">${monthName}</p>
+                ${statusHTML}
+            </div>
+            ${buttonHTML}
+        `;
+        
+        paymentContainer.appendChild(paymentRow);
+        currentDateIterator.setMonth(currentDateIterator.getMonth() + 1);
+    }
+
+    // Usamos delegación de eventos para manejar los clics en los botones de pago
+    paymentContainer.onclick = async (event) => {
+        const target = event.target;
+        if (target && target.classList.contains('toggle-payment-btn')) {
+            const monthKey = target.dataset.monthKey;
+            if (monthKey) {
+                await student.togglePaymentForMonth(monthKey);
+                // Refrescar el modal para ver el cambio inmediatamente
+                await showStudentDetails(studentId);
+                // Refrescar en segundo plano la tabla principal y las estadísticas
+                await renderStudentsTable();
+                await renderStudentStats();
+            }
+        }
+    };
+    // --- FIN: NUEVA LÓGICA DE PAGOS ---
 
     studentDetailsModal.show();
 }
