@@ -46,7 +46,7 @@
 
                 <div class="flex items-center space-x-1">
                     <img src="icons/icon-96x96.png" alt="Nura Yoga Logo" class="w-8 h-8">
-                    <h1 class="text-xl md:text-2xl font-bold text-white tracking-normal md:tracking-wider">nura <span class="font-light text-sm md:text-xl">yoga studio</span></h1>
+                    <h1 class="text-2xl font-bold text-white tracking-normal md:tracking-wider">nura <span class="font-light text-base md:text-xl">yoga studio</span></h1>
                 </div>
 
                 <div class="md:hidden">
@@ -377,13 +377,14 @@
                 </div>
             </div>
 
-            <div class="p-4 bg-gray-50 rounded-b-lg flex justify-between items-center">
-                <button id="delete-class-btn" class="btn-danger font-bold py-2 px-4 rounded-lg">Eliminar Clase</button>
-                <div>
-                    <button id="close-class-modal-btn" class="btn-secondary font-bold py-2 px-4 rounded-lg mr-2">Cerrar</button>
-                    <button id="save-class-changes-btn" class="btn-brand font-bold py-2 px-4 rounded-lg">Guardar Cambios</button>
-                </div>
+
+            <div class="p-4 bg-gray-50 rounded-b-lg flex flex-col md:flex-row items-center gap-3">
+                <button id="delete-class-btn" class="btn-danger font-bold py-2 px-4 rounded-lg w-full md:w-auto md:mr-auto">Eliminar Clase</button>
+                <button id="close-class-modal-btn" class="btn-secondary font-bold py-2 px-4 rounded-lg w-full md:w-auto">Cerrar</button>
+                <button id="save-class-changes-btn" class="btn-brand font-bold py-2 px-4 rounded-lg w-full md:w-auto">Guardar Cambios</button>
             </div>
+
+
         </div>
     </div>
 
