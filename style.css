@@ -340,13 +340,6 @@ tbody tr:last-child { border-bottom: none; }
 }
 
 /* ============ SECCIÓN DE CONFIGURACIÓN ============ */
-.config-section h2 {
-    font-size: 2.5rem;
-    font-weight: 300;
-    color: var(--text-primary);
-    margin-bottom: var(--space-2xl);
-    letter-spacing: -0.02em;
-}
 .config-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
