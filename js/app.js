@@ -583,9 +583,9 @@ templateForm.onSubmit(async (formData) => {
             const paymentDate = student.getPaymentDateForMonth(currentMonthKey);
             let paymentStatusHTML = '';
             if (paymentDate) {
-                paymentStatusHTML = `<div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-green-200"><span class="font-semibold text-green-600">Pagado</span></div>`;
+                paymentStatusHTML = `<div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-green-200"><span class="font-semibold text-green-600 whitespace-nowrap">Pagado</span></div>`;
             } else {
-                paymentStatusHTML = `<div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-red-200"><span class="font-semibold text-red-500">No pagado</span></div>`;
+                paymentStatusHTML = `<div class="payment-status-cell cursor-pointer p-2 rounded-md transition-colors hover:bg-red-200"><span class="font-semibold text-red-500 whitespace-nowrap">No pagado</span></div>`;
             }
 
             if (!row) {
@@ -596,9 +596,11 @@ templateForm.onSubmit(async (formData) => {
                 row.innerHTML = `
                     <td class="p-4 font-medium text-gray-800">${student.name}</td>
                     <td class="p-4 payment-status-container">${paymentStatusHTML}</td>
-                    <td class="p-4 flex items-center space-x-4">
-                        <button class="edit-student-btn text-blue-600 hover:text-blue-800 font-semibold">Editar</button>
-                        <button class="delete-student-btn text-red-500 hover:text-red-700 font-semibold">Eliminar</button>
+                    <td class="p-4">
+                        <div class="flex flex-col items-start space-y-2">
+                            <button class="edit-student-btn text-blue-600 hover:text-blue-800 font-semibold">Editar</button>
+                            <button class="delete-student-btn text-red-500 hover:text-red-700 font-semibold">Eliminar</button>
+                        </div>
                     </td>
                 `;
                 

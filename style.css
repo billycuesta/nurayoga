@@ -61,6 +61,10 @@ body {
 }
 
 /* ============ TIPOGRAFÍA ============ */
+/* Se comenta este bloque para ceder el control de los títulos a las clases de Tailwind CSS en el HTML.
+    Esto asegura que clases como .text-3xl y .font-bold funcionen sin conflictos.
+*/
+/*
 h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
     letter-spacing: -0.01em;
@@ -71,6 +75,7 @@ h1 { font-size: 2.5rem; font-weight: 700; letter-spacing: -0.02em; }
 h2 { font-size: 2rem; font-weight: 600; letter-spacing: -0.015em; }
 h3 { font-size: 1.5rem; font-weight: 600; }
 h4 { font-size: 1.25rem; font-weight: 500; }
+*/
 
 .font-brand {
     font-family: 'Playfair Display', Georgia, serif;
@@ -93,9 +98,7 @@ header {
     /* Se añade padding-top para el 'notch' del iPhone en la sección final */
 }
 
-/* Logo */
 header h1 {
-    font-size: 1.5rem;
     font-weight: 700;
     letter-spacing: 0.08em;
     color: white;
@@ -109,11 +112,11 @@ header h1 {
 
 header h1 span {
     font-weight: 300;
-    font-size: 0.8em;
     letter-spacing: 0.15em;
     opacity: 0.9;
     text-transform: uppercase;
 }
+
 
 /* ============ NAVEGACIÓN DESKTOP ============ */
 nav#main-nav button {
@@ -431,10 +434,13 @@ tbody tr:last-child { border-bottom: none; }
         padding: var(--space-sm) var(--space-lg);
     }
     
+    /* Se comenta esta regla para ceder el control a las clases de Tailwind en el HTML 
+    */
+    /*
     header h1 {
-        /* Reducimos un poco el tamaño del logo en móvil para que quepa bien */
         font-size: 1.25rem; 
     }
+    */
     /* === FIN DE LA CORRECCIÓN === */
 
     .config-grid {
